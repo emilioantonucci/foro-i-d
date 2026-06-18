@@ -1,0 +1,15 @@
+-- =========================================================================
+-- Radar I+D / I+D Hub — Seed
+-- The reference data (categorías, estados, prioridades, tipos de voto, puntos
+-- y catálogo de insignias) is seeded by migration 0001_init.sql, so the app is
+-- fully functional after migrating. We intentionally DO NOT seed fake posts/
+-- users — real data comes from the app.
+--
+-- After registering your own account, promote it to admin (so you can change
+-- estado/prioridad/categoría and manage badges). Run ONE of the following in
+-- the Supabase SQL editor, replacing the email:
+--
+--   update public.profiles set rol = 'admin'
+--   where email = 'investigacion.desarrollo@doinglobal.com';
+--
+-- =========================================================================

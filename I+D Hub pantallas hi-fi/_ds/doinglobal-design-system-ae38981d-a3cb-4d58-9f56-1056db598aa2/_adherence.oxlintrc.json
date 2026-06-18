@@ -1,0 +1,225 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "ui_kits/website/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Helvetica|Poppins))/i]",
+        "message": "Font not provided by the design system. Available: Helvetica, Poppins."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {},
+    "tokens": [
+      "--bg-accent",
+      "--bg-dark",
+      "--bg-primary",
+      "--bg-secondary",
+      "--border-default",
+      "--border-strong",
+      "--dg-black",
+      "--dg-error",
+      "--dg-error-dark",
+      "--dg-gray-100",
+      "--dg-gray-200",
+      "--dg-gray-300",
+      "--dg-gray-400",
+      "--dg-gray-50",
+      "--dg-gray-500",
+      "--dg-gray-600",
+      "--dg-gray-700",
+      "--dg-gray-800",
+      "--dg-gray-900",
+      "--dg-gray-light",
+      "--dg-green",
+      "--dg-info",
+      "--dg-info-dark",
+      "--dg-neutral",
+      "--dg-success",
+      "--dg-success-dark",
+      "--dg-warning",
+      "--dg-warning-dark",
+      "--dg-white",
+      "--dur-base",
+      "--dur-fast",
+      "--dur-slow",
+      "--ease-in-out",
+      "--ease-standard",
+      "--fg-accent",
+      "--fg-muted",
+      "--fg-on-dark",
+      "--fg-on-green",
+      "--fg-primary",
+      "--fg-secondary",
+      "--font-primary",
+      "--font-secondary",
+      "--fs-body",
+      "--fs-h1",
+      "--fs-h2",
+      "--fs-h3",
+      "--fs-h4",
+      "--fs-h5",
+      "--fs-h6",
+      "--fs-micro",
+      "--fs-small",
+      "--fw-bold",
+      "--fw-medium",
+      "--fw-regular",
+      "--fw-semibold",
+      "--img-overlay-black-55",
+      "--lh-body",
+      "--lh-heading",
+      "--lh-loose",
+      "--lh-tight",
+      "--radius-lg",
+      "--radius-md",
+      "--radius-pill",
+      "--radius-sm",
+      "--radius-xl",
+      "--shadow-lg",
+      "--shadow-md",
+      "--shadow-none",
+      "--shadow-sm",
+      "--space-1",
+      "--space-10",
+      "--space-12",
+      "--space-16",
+      "--space-2",
+      "--space-20",
+      "--space-24",
+      "--space-3",
+      "--space-4",
+      "--space-5",
+      "--space-6",
+      "--space-8"
+    ],
+    "tokenKinds": {
+      "--dg-black": "color",
+      "--dg-white": "color",
+      "--dg-gray-light": "color",
+      "--dg-green": "color",
+      "--dg-error": "color",
+      "--dg-error-dark": "color",
+      "--dg-warning": "color",
+      "--dg-warning-dark": "color",
+      "--dg-success": "color",
+      "--dg-success-dark": "color",
+      "--dg-info": "color",
+      "--dg-info-dark": "color",
+      "--dg-neutral": "color",
+      "--dg-gray-50": "color",
+      "--dg-gray-100": "color",
+      "--dg-gray-200": "color",
+      "--dg-gray-300": "color",
+      "--dg-gray-400": "color",
+      "--dg-gray-500": "color",
+      "--dg-gray-600": "color",
+      "--dg-gray-700": "color",
+      "--dg-gray-800": "color",
+      "--dg-gray-900": "color",
+      "--fg-primary": "color",
+      "--fg-secondary": "color",
+      "--fg-muted": "color",
+      "--fg-on-dark": "color",
+      "--fg-on-green": "color",
+      "--fg-accent": "color",
+      "--bg-primary": "color",
+      "--bg-secondary": "color",
+      "--bg-dark": "color",
+      "--bg-accent": "color",
+      "--border-default": "color",
+      "--border-strong": "color",
+      "--img-overlay-black-55": "color",
+      "--font-primary": "font",
+      "--font-secondary": "font",
+      "--fs-h1": "spacing",
+      "--fs-h2": "spacing",
+      "--fs-h3": "spacing",
+      "--fs-h4": "spacing",
+      "--fs-h5": "spacing",
+      "--fs-h6": "spacing",
+      "--fs-body": "spacing",
+      "--fs-small": "spacing",
+      "--fs-micro": "spacing",
+      "--lh-tight": "other",
+      "--lh-heading": "other",
+      "--lh-body": "other",
+      "--lh-loose": "other",
+      "--fw-regular": "other",
+      "--fw-medium": "other",
+      "--fw-semibold": "other",
+      "--fw-bold": "other",
+      "--space-1": "spacing",
+      "--space-2": "spacing",
+      "--space-3": "spacing",
+      "--space-4": "spacing",
+      "--space-5": "spacing",
+      "--space-6": "spacing",
+      "--space-8": "spacing",
+      "--space-10": "spacing",
+      "--space-12": "spacing",
+      "--space-16": "spacing",
+      "--space-20": "spacing",
+      "--space-24": "spacing",
+      "--radius-sm": "radius",
+      "--radius-md": "radius",
+      "--radius-lg": "radius",
+      "--radius-xl": "radius",
+      "--radius-pill": "radius",
+      "--shadow-none": "shadow",
+      "--shadow-sm": "shadow",
+      "--shadow-md": "shadow",
+      "--shadow-lg": "shadow",
+      "--ease-standard": "other",
+      "--ease-in-out": "other",
+      "--dur-fast": "other",
+      "--dur-base": "other",
+      "--dur-slow": "other"
+    },
+    "fontFamilies": [
+      "Helvetica",
+      "Poppins"
+    ]
+  }
+}

@@ -1,0 +1,227 @@
+/* =========================================================================
+   doinGlobal Design System — Colors & Typography
+   Source: doinGlobal Brand Manual v2.25 + Portal del Alumno color scheme
+   ========================================================================= */
+
+/* -------------------- Web fonts --------------------
+   Self-hosted from /fonts. See fonts.css for @font-face rules.
+   Include both stylesheets in your HTML <head>:
+     <link rel="stylesheet" href="fonts.css">
+     <link rel="stylesheet" href="colors_and_type.css">
+--------------------------------------------------------------------------- */
+@import url('fonts.css');
+
+:root {
+  /* ===== PRIMARY BRAND COLORS (Brand Manual p.14) ===== */
+  --dg-black:          #262626;   /* RGB 38 38 38  — body text, dark surfaces */
+  --dg-white:          #FFFFFF;   /* dominant background (85% of surface area) */
+  --dg-gray-light:     #F4F4F4;   /* RGB 244 244 244 — secondary surfaces */
+  --dg-green:          #99CC06;   /* RGB 153 204 6 — accent, only for primary CTAs & small details */
+
+  /* ===== SEMANTIC / STATE COLORS (Portal del Alumno esquema) ===== */
+  --dg-error:          #C62A2F;   /* Error primary */
+  --dg-error-dark:     #980000;   /* Error emphasis */
+  --dg-warning:        #FFBA1A;   /* Alerta / Atención */
+  --dg-warning-dark:   #B45F06;   /* Alerta emphasis */
+  --dg-success:        #99CC06;   /* Éxito = brand green */
+  --dg-success-dark:   #38761D;   /* Éxito emphasis */
+  --dg-info:           #30587D;   /* Información / En proceso */
+  --dg-info-dark:      #073763;   /* Información emphasis */
+  --dg-neutral:        #AAAAB4;   /* Neutro / No disponible / Acción no obligatoria */
+
+  /* ===== NEUTRAL GRAYSCALE (derived; not in manual but needed for UI) ===== */
+  --dg-gray-50:  #FAFAFA;
+  --dg-gray-100: #F4F4F4;        /* = brand gray-light */
+  --dg-gray-200: #E8E8E8;
+  --dg-gray-300: #D4D4D4;
+  --dg-gray-400: #AAAAB4;        /* = neutral */
+  --dg-gray-500: #737373;
+  --dg-gray-600: #525252;
+  --dg-gray-700: #404040;
+  --dg-gray-800: #262626;        /* = brand black */
+  --dg-gray-900: #171717;
+
+  /* ===== FOREGROUND / BACKGROUND TOKENS ===== */
+  --fg-primary:    var(--dg-black);
+  --fg-secondary:  var(--dg-gray-600);
+  --fg-muted:      var(--dg-gray-400);
+  --fg-on-dark:    var(--dg-white);
+  --fg-on-green:   var(--dg-black);   /* bold/semibold black on green */
+  --fg-accent:     var(--dg-green);
+
+  --bg-primary:    var(--dg-white);
+  --bg-secondary:  var(--dg-gray-light);
+  --bg-dark:       var(--dg-black);
+  --bg-accent:     var(--dg-green);
+
+  --border-default: var(--dg-gray-200);
+  --border-strong:  var(--dg-gray-300);
+
+  /* ===== IMAGE OVERLAY (brand manual p.22–23) ===== */
+  --img-overlay-black-55: rgba(0, 0, 0, 0.55);   /* multiplicado 55% over banners */
+
+  /* ===== TYPEFACES ===== */
+  /* Primary (body): Helvetica self-hosted */
+  --font-primary:   'Helvetica', 'Helvetica Neue', Arial, sans-serif;
+  /* Secondary (display/titles per brand manual): Poppins self-hosted */
+  --font-secondary: 'Poppins', 'Helvetica', 'Helvetica Neue', Arial, sans-serif;
+
+  /* ===== TYPE SCALE (UI Kit Web Design — Brand Manual p.19) =====
+     H1 Helvetica Bold 64
+     H2 Helvetica Bold 48
+     H3 Helvetica Bold 40  (also used at 18 for subhead per manual)
+     PH  Helvetica Bold 16 + Regular 16
+     PH2 Helvetica Bold 16 + Regular 14
+  */
+  --fs-h1:    64px;
+  --fs-h2:    48px;
+  --fs-h3:    40px;
+  --fs-h4:    24px;   /* derived for UI use */
+  --fs-h5:    20px;   /* derived */
+  --fs-h6:    18px;   /* = H3 small variant from manual */
+  --fs-body:  16px;
+  --fs-small: 14px;
+  --fs-micro: 12px;
+
+  --lh-tight:   1.1;
+  --lh-heading: 1.2;
+  --lh-body:    1.5;
+  --lh-loose:   1.6;
+
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+
+  /* ===== SPACING (4px base) ===== */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* ===== RADII ===== */
+  /* Brand tends to use generous pill radii on CTAs, moderate on cards/containers */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-pill: 999px;
+
+  /* ===== SHADOWS (conservative — brand favors flat surfaces) ===== */
+  --shadow-none: none;
+  --shadow-sm:   0 1px 2px rgba(38, 38, 38, 0.06);
+  --shadow-md:   0 4px 12px rgba(38, 38, 38, 0.08);
+  --shadow-lg:   0 12px 32px rgba(38, 38, 38, 0.10);
+
+  /* ===== MOTION ===== */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in-out:   cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast:   120ms;
+  --dur-base:   200ms;
+  --dur-slow:   320ms;
+}
+
+/* =========================================================================
+   Semantic typography classes
+   Use these instead of raw tokens where possible.
+   ========================================================================= */
+
+.dg-h1, h1.dg {
+  font-family: var(--font-primary);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+  color: var(--fg-primary);
+}
+.dg-h2, h2.dg {
+  font-family: var(--font-primary);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-heading);
+  letter-spacing: -0.005em;
+  color: var(--fg-primary);
+}
+.dg-h3, h3.dg {
+  font-family: var(--font-primary);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-heading);
+  color: var(--fg-primary);
+}
+.dg-h4, h4.dg {
+  font-family: var(--font-primary);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h4);
+  line-height: var(--lh-heading);
+  color: var(--fg-primary);
+}
+.dg-h5, h5.dg {
+  font-family: var(--font-primary);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h5);
+  line-height: var(--lh-heading);
+  color: var(--fg-primary);
+}
+.dg-h6, h6.dg {
+  font-family: var(--font-primary);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h6);
+  line-height: var(--lh-heading);
+  color: var(--fg-primary);
+}
+
+.dg-display {
+  font-family: var(--font-secondary);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.015em;
+  color: var(--fg-primary);
+}
+
+.dg-p, p.dg {
+  font-family: var(--font-primary);
+  font-weight: var(--fw-regular);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg-primary);
+  text-wrap: pretty;
+}
+.dg-p--lead {
+  font-size: 18px;
+  line-height: var(--lh-loose);
+  color: var(--fg-secondary);
+}
+.dg-p--small {
+  font-size: var(--fs-small);
+  color: var(--fg-secondary);
+}
+.dg-p--micro {
+  font-size: var(--fs-micro);
+  letter-spacing: 0.02em;
+  color: var(--fg-muted);
+}
+
+.dg-eyebrow {
+  font-family: var(--font-primary);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-accent);
+}
+
+/* PH = Paragraph Heading combos from brand manual p.19 */
+.dg-ph1-label { font: var(--fw-bold) 16px/1.4 var(--font-primary); }
+.dg-ph1-body  { font: var(--fw-regular) 16px/1.5 var(--font-primary); }
+.dg-ph2-label { font: var(--fw-bold) 16px/1.4 var(--font-primary); }
+.dg-ph2-body  { font: var(--fw-regular) 14px/1.5 var(--font-primary); }
