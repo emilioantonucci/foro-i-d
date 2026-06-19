@@ -1,183 +1,125 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { signUpAction, type AuthResult } from "../actions";
+import { corporateEmailSchema } from "@/lib/validation";
+import AuthCard, { AuthAlert } from "@/components/auth/AuthCard";
+import Field, { Input } from "@/components/ui/Field";
+import Button from "@/components/ui/Button";
 
 const initial: AuthResult = {};
-
-const cardStyle: React.CSSProperties = {
-  background: "#fff",
-  border: "1px solid #E8E8E8",
-  borderRadius: "16px",
-  padding: "32px 30px",
-  boxShadow: "0 1px 3px rgba(0,0,0,.06), 0 12px 32px rgba(0,0,0,.05)",
-};
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: "13px",
-  fontWeight: 700,
-  color: "#404040",
-  marginBottom: "6px",
-};
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "11px 13px",
-  border: "1px solid #E0DED9",
-  borderRadius: "10px",
-  fontSize: "14px",
-  color: "#262626",
-  background: "#fff",
-  outline: "none",
-};
-const fieldWrap: React.CSSProperties = { marginBottom: "16px" };
 
 export default function RegisterPage() {
   const [state, formAction, pending] = useActionState(signUpAction, initial);
 
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const mark = (k: string) => setTouched((t) => ({ ...t, [k]: true }));
+
+  const emailParse = corporateEmailSchema.safeParse(email);
+  const nombreError =
+    touched.nombre && nombre.trim().length < 2 ? "Ingresá tu nombre completo." : undefined;
+  const emailError =
+    touched.email && !emailParse.success ? emailParse.error.issues[0]?.message : undefined;
+  const passwordError =
+    touched.password && password.length < 8
+      ? "La contraseña debe tener al menos 8 caracteres."
+      : undefined;
+  const confirmError =
+    touched.confirm && confirm !== password ? "Las contraseñas no coinciden." : undefined;
+
   return (
-    <form action={formAction} style={cardStyle}>
-      <div
-        style={{
-          fontSize: "11px",
-          letterSpacing: ".14em",
-          textTransform: "uppercase",
-          color: "#6b9000",
-          fontWeight: 700,
-          marginBottom: "8px",
-        }}
-      >
-        Sumate al equipo
-      </div>
-      <h1
-        style={{
-          fontFamily: "'Poppins', sans-serif",
-          fontSize: "24px",
-          margin: "0 0 6px",
-          color: "#262626",
-          letterSpacing: "-0.01em",
-        }}
-      >
-        Crear cuenta
-      </h1>
-      <p style={{ fontSize: "14px", color: "#737373", margin: "0 0 22px" }}>
-        Registrate como colaborador para publicar, debatir y priorizar señales de I+D.
-      </p>
+    <AuthCard
+      eyebrow="Sumate al equipo"
+      title="Crear cuenta"
+      subtitle="Registrate como colaborador para publicar, debatir y priorizar señales de I+D."
+    >
+      <form action={formAction}>
+        {state.error && <AuthAlert tone="error">{state.error}</AuthAlert>}
+        {state.success && <AuthAlert tone="success">{state.success}</AuthAlert>}
 
-      {state.error && (
-        <div
-          role="alert"
-          style={{
-            background: "#FBEAEA",
-            border: "1px solid #E9B7B8",
-            color: "#980000",
-            fontSize: "13px",
-            borderRadius: "10px",
-            padding: "10px 12px",
-            marginBottom: "16px",
-          }}
-        >
-          {state.error}
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <Field id="nombre" label="Nombre del colaborador" required error={nombreError}>
+            <Input
+              name="nombre"
+              type="text"
+              autoComplete="name"
+              required
+              placeholder="Nombre y apellido"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              onBlur={() => mark("nombre")}
+            />
+          </Field>
+
+          <Field
+            id="email"
+            label="Email corporativo"
+            required
+            error={emailError}
+            hint={!emailError ? "Solo correos @doinglobal.com" : undefined}
+          >
+            <Input
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              placeholder="nombre@doinglobal.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => mark("email")}
+            />
+          </Field>
+
+          <Field
+            id="password"
+            label="Contraseña"
+            required
+            error={passwordError}
+            hint={!passwordError ? "Mínimo 8 caracteres" : undefined}
+          >
+            <Input
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={8}
+              placeholder="Mínimo 8 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onBlur={() => mark("password")}
+            />
+          </Field>
+
+          <Field id="confirm" label="Confirmar contraseña" required error={confirmError}>
+            <Input
+              name="confirm"
+              type="password"
+              autoComplete="new-password"
+              required
+              placeholder="Repetí la contraseña"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              onBlur={() => mark("confirm")}
+            />
+          </Field>
         </div>
-      )}
-      {state.success && (
-        <div
-          role="status"
-          style={{
-            background: "#F1F7DC",
-            border: "1px solid #CDE08C",
-            color: "#38761D",
-            fontSize: "13px",
-            borderRadius: "10px",
-            padding: "10px 12px",
-            marginBottom: "16px",
-          }}
-        >
-          {state.success}
-        </div>
-      )}
 
-      <div style={fieldWrap}>
-        <label htmlFor="nombre" style={labelStyle}>
-          Nombre del colaborador
-        </label>
-        <input
-          id="nombre"
-          name="nombre"
-          type="text"
-          autoComplete="name"
-          required
-          placeholder="Nombre y apellido"
-          style={inputStyle}
-        />
-      </div>
+        <Button type="submit" block loading={pending} style={{ marginTop: "20px" }}>
+          Crear cuenta
+        </Button>
+      </form>
 
-      <div style={fieldWrap}>
-        <label htmlFor="email" style={labelStyle}>
-          Email corporativo
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          placeholder="nombre@doinglobal.com"
-          style={inputStyle}
-        />
-      </div>
-
-      <div style={fieldWrap}>
-        <label htmlFor="password" style={labelStyle}>
-          Contraseña
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={8}
-          placeholder="Mínimo 8 caracteres"
-          style={inputStyle}
-        />
-      </div>
-
-      <div style={fieldWrap}>
-        <label htmlFor="confirm" style={labelStyle}>
-          Confirmar contraseña
-        </label>
-        <input
-          id="confirm"
-          name="confirm"
-          type="password"
-          autoComplete="new-password"
-          required
-          placeholder="Repetí la contraseña"
-          style={inputStyle}
-        />
-      </div>
-
-      <button
-        type="submit"
-        className="dg-btn dg-btn--primary"
-        disabled={pending}
-        style={{
-          width: "100%",
-          justifyContent: "center",
-          marginTop: "6px",
-          opacity: pending ? 0.7 : 1,
-        }}
-      >
-        {pending ? "Creando cuenta…" : "Crear cuenta"}
-      </button>
-
-      <p style={{ fontSize: "13px", color: "#737373", textAlign: "center", marginTop: "18px", marginBottom: 0 }}>
+      <p style={{ fontSize: "13px", color: "var(--fg-secondary)", textAlign: "center", marginTop: "16px", marginBottom: 0 }}>
         ¿Ya tenés cuenta?{" "}
-        <Link href="/login" style={{ color: "#6b9000", fontWeight: 700 }}>
+        <Link href="/login" style={{ color: "#6B9000", fontWeight: 700 }}>
           Iniciá sesión
         </Link>
       </p>
-    </form>
+    </AuthCard>
   );
 }

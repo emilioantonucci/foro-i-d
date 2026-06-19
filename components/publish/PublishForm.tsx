@@ -2,18 +2,29 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, X, Plus, AlertTriangle, Loader2 } from "lucide-react";
+import { Sparkles, X, AlertTriangle } from "lucide-react";
 import { CATEGORIAS, PRIORIDADES, APLICACIONES_INTERNAS } from "@/lib/constants";
 import { PUNTOS } from "@/lib/points";
 import { createPostAction } from "@/app/(app)/actions";
+import { PUBLISH_LIMITS } from "@/lib/validation";
 import type { LinkSummary } from "@/lib/types";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Field, { Input, Textarea, Select } from "@/components/ui/Field";
+import { useToast } from "@/components/ui/Toast";
 
-const label: React.CSSProperties = { display: "block", fontSize: "13px", fontWeight: 700, color: "#404040", marginBottom: "6px" };
-const input: React.CSSProperties = { width: "100%", padding: "10px 12px", border: "1px solid #E0DED9", borderRadius: "10px", fontSize: "14px", color: "#262626", outline: "none", background: "#fff" };
-const field: React.CSSProperties = { marginBottom: "18px" };
+function isValidUrl(value: string): boolean {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export default function PublishForm() {
   const router = useRouter();
+  const toast = useToast();
   const [url, setUrl] = useState("");
   const [titulo, setTitulo] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -25,14 +36,29 @@ export default function PublishForm() {
   const [aplicaciones, setAplicaciones] = useState<string[]>([]);
 
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
   const [aiRiesgos, setAiRiesgos] = useState<string[]>([]);
   const [aiTags, setAiTags] = useState<string[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [attempted, setAttempted] = useState(false);
 
   const puntosEstimados = PUNTOS.publicar_enlace + (resumen.trim() ? PUNTOS.resumen_propio : 0);
+
+  const show = (k: string) => touched[k] || attempted;
+  const tituloError =
+    show("titulo") && titulo.trim().length < 5
+      ? "El título es muy corto (mínimo 5 caracteres)."
+      : undefined;
+  const urlError =
+    show("url") && url.trim() !== "" && !isValidUrl(url.trim())
+      ? "Ingresá una URL válida (https://…)."
+      : undefined;
+  const categoriaError =
+    show("categoria") && !categoria ? "Elegí una categoría." : undefined;
+
+  const canSubmit =
+    titulo.trim().length >= 5 && (url.trim() === "" || isValidUrl(url.trim())) && !!categoria;
 
   function addTag(t: string) {
     const clean = t.trim().replace(/^#/, "").replace(/\s+/g, "");
@@ -45,11 +71,10 @@ export default function PublishForm() {
 
   async function analizarConIA() {
     if (!url.trim() && !resumen.trim()) {
-      setAiError("Pegá una URL o un texto para analizar.");
+      toast.error("Pegá una URL o un texto para analizar.");
       return;
     }
     setAiLoading(true);
-    setAiError(null);
     try {
       const res = await fetch("/api/ai/summary", {
         method: "POST",
@@ -69,12 +94,15 @@ export default function PublishForm() {
         if (match) setCategoria(match.slug);
       }
       setEtiquetas((prev) =>
-        Array.from(new Set([...prev, ...(data.etiquetasSugeridas ?? []).map((t) => t.replace(/^#/, ""))])),
+        Array.from(
+          new Set([...prev, ...(data.etiquetasSugeridas ?? []).map((t) => t.replace(/^#/, ""))]),
+        ),
       );
       setAiTags(data.etiquetasSugeridas ?? []);
       setAiRiesgos(data.riesgos ?? []);
+      toast.success("Análisis listo · revisá y ajustá los campos");
     } catch (e) {
-      setAiError(e instanceof Error ? e.message : "Error al analizar con IA.");
+      toast.error(e instanceof Error ? e.message : "Error al analizar con IA.");
     } finally {
       setAiLoading(false);
     }
@@ -82,9 +110,9 @@ export default function PublishForm() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    if (!titulo.trim()) {
-      setError("El título es obligatorio.");
+    setAttempted(true);
+    if (!canSubmit) {
+      toast.error("Revisá los campos marcados antes de publicar.");
       return;
     }
     setSubmitting(true);
@@ -100,199 +128,349 @@ export default function PublishForm() {
     });
     // On success the action redirects; only errors return here.
     if (result?.error) {
-      setError(result.error);
+      toast.error(result.error);
       setSubmitting(false);
     }
   }
 
+  const labelStyle: React.CSSProperties = {
+    display: "block",
+    fontSize: "13px",
+    fontWeight: 700,
+    color: "var(--fg-primary)",
+    marginBottom: "6px",
+  };
+
   return (
     <form onSubmit={onSubmit}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
-        <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: "22px", margin: 0, color: "#262626", letterSpacing: "-0.01em" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "12px",
+          flexWrap: "wrap",
+          marginBottom: "18px",
+        }}
+      >
+        <h1 className="dg-page-title" style={{ margin: 0 }}>
           Publicar enlace
         </h1>
         <div style={{ display: "flex", gap: "8px" }}>
-          <button type="button" onClick={() => router.push("/radar")} className="dg-btn dg-btn--ghost" style={{ fontSize: "13px" }}>
+          <Button type="button" variant="ghost" size="sm" onClick={() => router.push("/radar")}>
             Cancelar
-          </button>
-          <button type="submit" disabled={submitting} className="dg-btn dg-btn--primary" style={{ fontSize: "13px", opacity: submitting ? 0.7 : 1 }}>
-            {submitting ? "Publicando…" : "Publicar"}
-          </button>
+          </Button>
+          <Button type="submit" size="sm" loading={submitting}>
+            Publicar
+          </Button>
         </div>
       </div>
 
-      {error && (
-        <div role="alert" style={{ background: "#FBEAEA", border: "1px solid #E9B7B8", color: "#980000", fontSize: "13px", borderRadius: "10px", padding: "10px 12px", marginBottom: "16px" }}>
-          {error}
-        </div>
-      )}
-
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 320px", gap: "20px", alignItems: "start" }}>
+      <div className="dg-two-col--wide-rail">
         {/* MAIN FORM */}
-        <div style={{ background: "#fff", border: "1px solid #E8E8E8", borderRadius: "14px", padding: "22px" }}>
-          <div style={field}>
-            <label style={label} htmlFor="url">URL del recurso</label>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <input id="url" type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" style={{ ...input, flex: 1 }} />
-              <button type="button" onClick={analizarConIA} disabled={aiLoading} className="dg-btn dg-btn--secondary" style={{ fontSize: "13px", whiteSpace: "nowrap" }}>
-                {aiLoading ? <Loader2 size={15} className="spin" /> : <Sparkles size={15} color="#99CC06" />}
-                {aiLoading ? "Analizando…" : "Analizar con IA"}
-              </button>
-            </div>
-            {aiError && <p style={{ color: "#C62A2F", fontSize: "12px", margin: "6px 0 0" }}>{aiError}</p>}
-          </div>
+        <Card pad="lg">
+          <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+            <Field
+              id="url"
+              label="URL del recurso"
+              error={urlError}
+              hint={!urlError ? "Pegá el enlace y dejá que la IA pre-rellene los campos." : undefined}
+            >
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                <Input
+                  type="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, url: true }))}
+                  placeholder="https://…"
+                  invalid={!!urlError}
+                  style={{ flex: 1, minWidth: "200px" }}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={analizarConIA}
+                  loading={aiLoading}
+                  icon={!aiLoading ? <Sparkles size={15} color="#99CC06" aria-hidden="true" /> : undefined}
+                >
+                  {aiLoading ? "Analizando…" : "Analizar con IA"}
+                </Button>
+              </div>
+            </Field>
 
-          <div style={field}>
-            <label style={label} htmlFor="titulo">Título del recurso *</label>
-            <input id="titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} required style={input} />
-          </div>
+            <Field
+              id="titulo"
+              label="Título del recurso"
+              required
+              error={tituloError}
+              count={{ value: titulo.length, max: PUBLISH_LIMITS.titulo }}
+            >
+              <Input
+                value={titulo}
+                maxLength={PUBLISH_LIMITS.titulo}
+                onChange={(e) => setTitulo(e.target.value)}
+                onBlur={() => setTouched((t) => ({ ...t, titulo: true }))}
+                placeholder="Un título claro y descriptivo"
+              />
+            </Field>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", ...field }}>
-            <div>
-              <label style={label} htmlFor="categoria">Categoría</label>
-              <select id="categoria" value={categoria} onChange={(e) => setCategoria(e.target.value)} style={input}>
-                <option value="">Seleccioná…</option>
-                {CATEGORIAS.map((c) => (
-                  <option key={c.slug} value={c.slug}>{c.nombre}</option>
-                ))}
-              </select>
+            <div className="dg-grid-halves">
+              <Field id="categoria" label="Categoría" required error={categoriaError}>
+                <Select
+                  value={categoria}
+                  onChange={(e) => setCategoria(e.target.value)}
+                  onBlur={() => setTouched((t) => ({ ...t, categoria: true }))}
+                >
+                  <option value="">Seleccioná…</option>
+                  {CATEGORIAS.map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.nombre}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+
+              <div>
+                <span style={labelStyle}>Prioridad</span>
+                <div style={{ display: "flex", gap: "6px" }} role="group" aria-label="Prioridad">
+                  {PRIORIDADES.map((p) => {
+                    const active = prioridad === p.slug;
+                    return (
+                      <button
+                        key={p.slug}
+                        type="button"
+                        onClick={() => setPrioridad(p.slug)}
+                        aria-pressed={active}
+                        title={p.nombre}
+                        style={{
+                          flex: 1,
+                          padding: "9px 4px",
+                          borderRadius: "var(--radius-md)",
+                          border: active ? `2px solid ${p.color}` : "1px solid var(--border-default)",
+                          background: active ? `${p.color}1F` : "var(--dg-white)",
+                          fontSize: "11.5px",
+                          fontWeight: 700,
+                          color: "var(--fg-primary)",
+                          cursor: "pointer",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: p.color }} />
+                        {p.nombre}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
+
+            <Field
+              id="resumen"
+              label="Resumen breve"
+              hint="Sumá un resumen propio para ganar puntos."
+              count={{ value: resumen.length, max: PUBLISH_LIMITS.resumen }}
+            >
+              <Textarea
+                value={resumen}
+                rows={4}
+                maxLength={PUBLISH_LIMITS.resumen}
+                onChange={(e) => setResumen(e.target.value)}
+                placeholder="Síntesis del recurso"
+              />
+            </Field>
+
+            <Field
+              id="relevancia"
+              label="Por qué es relevante para I+D"
+              count={{ value: relevancia.length, max: PUBLISH_LIMITS.relevancia }}
+            >
+              <Textarea
+                value={relevancia}
+                rows={3}
+                maxLength={PUBLISH_LIMITS.relevancia}
+                onChange={(e) => setRelevancia(e.target.value)}
+                placeholder="Cómo se conecta con nuestra agenda de I+D"
+              />
+            </Field>
+
             <div>
-              <label style={label}>Prioridad</label>
-              <div style={{ display: "flex", gap: "6px" }}>
-                {PRIORIDADES.map((p) => (
-                  <button
-                    key={p.slug}
-                    type="button"
-                    onClick={() => setPrioridad(p.slug)}
-                    title={p.nombre}
-                    style={{
-                      flex: 1,
-                      padding: "9px 4px",
-                      borderRadius: "9px",
-                      border: prioridad === p.slug ? `2px solid ${p.color}` : "1px solid #E0DED9",
-                      background: prioridad === p.slug ? `${p.color}1F` : "#fff",
-                      fontSize: "11.5px",
-                      fontWeight: 700,
-                      color: "#404040",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
-                  >
-                    <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: p.color }} />
-                    {p.nombre}
-                  </button>
-                ))}
+              <span style={labelStyle}>Etiquetas</span>
+              {etiquetas.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "8px" }}>
+                  {etiquetas.map((t) => (
+                    <span
+                      key={t}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        background: "var(--dg-gray-100)",
+                        borderRadius: "var(--radius-pill)",
+                        padding: "4px 6px 4px 10px",
+                        fontSize: "12.5px",
+                        fontWeight: 600,
+                        color: "var(--dg-gray-700)",
+                      }}
+                    >
+                      #{t}
+                      <button
+                        type="button"
+                        onClick={() => setEtiquetas(etiquetas.filter((x) => x !== t))}
+                        aria-label={`Quitar etiqueta ${t}`}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          display: "flex",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <X size={13} color="var(--fg-muted)" aria-hidden="true" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <label htmlFor="tag-input" className="sr-only">
+                Añadir etiqueta
+              </label>
+              <Input
+                id="tag-input"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === ",") {
+                    e.preventDefault();
+                    addTag(tagInput);
+                  }
+                }}
+                placeholder="Escribí una etiqueta y presioná Enter…"
+              />
+            </div>
+
+            <div>
+              <span style={labelStyle}>Posible aplicación interna</span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                {APLICACIONES_INTERNAS.map((a) => {
+                  const active = aplicaciones.includes(a);
+                  return (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => toggleAplicacion(a)}
+                      aria-pressed={active}
+                      style={{
+                        padding: "7px 13px",
+                        borderRadius: "var(--radius-pill)",
+                        fontSize: "12.5px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        border: active ? "1.5px solid #99CC06" : "1px solid var(--border-default)",
+                        background: active ? "rgba(153,204,6,0.12)" : "var(--dg-white)",
+                        color: "var(--fg-primary)",
+                      }}
+                    >
+                      {a}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
-
-          <div style={field}>
-            <label style={label} htmlFor="resumen">Resumen breve</label>
-            <textarea id="resumen" value={resumen} onChange={(e) => setResumen(e.target.value)} rows={4} placeholder="Síntesis del recurso (sumá uno propio para ganar puntos)" style={{ ...input, resize: "vertical" }} />
-          </div>
-
-          <div style={field}>
-            <label style={label} htmlFor="relevancia">Por qué es relevante para I+D</label>
-            <textarea id="relevancia" value={relevancia} onChange={(e) => setRelevancia(e.target.value)} rows={3} placeholder="Cómo se conecta con nuestra agenda de I+D" style={{ ...input, resize: "vertical" }} />
-          </div>
-
-          <div style={field}>
-            <label style={label}>Etiquetas</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "8px" }}>
-              {etiquetas.map((t) => (
-                <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: "5px", background: "#F4F4F4", borderRadius: "999px", padding: "4px 10px", fontSize: "12.5px", fontWeight: 600, color: "#404040" }}>
-                  #{t}
-                  <button type="button" onClick={() => setEtiquetas(etiquetas.filter((x) => x !== t))} style={{ background: "none", border: "none", padding: 0, display: "flex", cursor: "pointer" }}>
-                    <X size={12} color="#AAAAB4" />
-                  </button>
-                </span>
-              ))}
-            </div>
-            <input
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === ",") {
-                  e.preventDefault();
-                  addTag(tagInput);
-                }
-              }}
-              placeholder="Añadir etiqueta y Enter…"
-              style={input}
-            />
-          </div>
-
-          <div>
-            <label style={label}>Posible aplicación interna</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              {APLICACIONES_INTERNAS.map((a) => {
-                const active = aplicaciones.includes(a);
-                return (
-                  <button
-                    key={a}
-                    type="button"
-                    onClick={() => toggleAplicacion(a)}
-                    style={{
-                      padding: "7px 13px",
-                      borderRadius: "999px",
-                      fontSize: "12.5px",
-                      fontWeight: 600,
-                      border: active ? "1.5px solid #99CC06" : "1px solid #E0DED9",
-                      background: active ? "rgba(153,204,6,0.12)" : "#fff",
-                      color: "#404040",
-                    }}
-                  >
-                    {a}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+        </Card>
 
         {/* RIGHT PANEL */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <div style={{ background: "#262626", borderRadius: "14px", padding: "18px", color: "#fff" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 700, color: "#99CC06", marginBottom: "8px" }}>
-              <Sparkles size={14} /> Análisis automático
+        <div className="dg-two-col__rail" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div style={{ background: "var(--dg-black)", borderRadius: "var(--radius-lg)", padding: "18px", color: "var(--dg-white)" }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "12px",
+                fontWeight: 700,
+                color: "var(--dg-green)",
+                marginBottom: "8px",
+              }}
+            >
+              <Sparkles size={14} aria-hidden="true" /> Análisis automático
             </div>
             <p style={{ fontSize: "12.5px", color: "rgba(255,255,255,0.75)", lineHeight: 1.5, margin: "0 0 12px" }}>
-              La IA puede pre-rellenar resumen, etiquetas, aplicación y categoría. Revisá y ajustá antes de publicar.
+              La IA puede pre-rellenar resumen, etiquetas, aplicación y categoría. Revisá y ajustá
+              antes de publicar.
             </p>
             {aiTags.length > 0 && (
               <div style={{ marginBottom: "12px" }}>
-                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>Etiquetas sugeridas</div>
+                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginBottom: "6px" }}>
+                  Etiquetas sugeridas
+                </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                   {aiTags.map((t) => (
-                    <span key={t} style={{ background: "rgba(255,255,255,0.1)", borderRadius: "999px", padding: "3px 9px", fontSize: "11.5px" }}>#{t.replace(/^#/, "")}</span>
+                    <span
+                      key={t}
+                      style={{
+                        background: "rgba(255,255,255,0.1)",
+                        borderRadius: "var(--radius-pill)",
+                        padding: "3px 9px",
+                        fontSize: "11.5px",
+                      }}
+                    >
+                      #{t.replace(/^#/, "")}
+                    </span>
                   ))}
                 </div>
               </div>
             )}
             {aiRiesgos.length > 0 && (
-              <div style={{ background: "rgba(198,42,47,0.18)", borderRadius: "10px", padding: "10px 12px" }}>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "11.5px", fontWeight: 700, color: "#FF9A9C", marginBottom: "4px" }}>
-                  <AlertTriangle size={12} /> Riesgos / límites
+              <div style={{ background: "rgba(198,42,47,0.18)", borderRadius: "var(--radius-md)", padding: "10px 12px" }}>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    fontSize: "11.5px",
+                    fontWeight: 700,
+                    color: "#FF9A9C",
+                    marginBottom: "4px",
+                  }}
+                >
+                  <AlertTriangle size={12} aria-hidden="true" /> Riesgos / límites
                 </div>
                 <ul style={{ margin: 0, paddingLeft: "16px", fontSize: "12px", color: "rgba(255,255,255,0.85)", lineHeight: 1.5 }}>
-                  {aiRiesgos.map((r, i) => <li key={i}>{r}</li>)}
+                  {aiRiesgos.map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
                 </ul>
               </div>
             )}
           </div>
 
-          <div style={{ background: "rgba(153,204,6,0.10)", border: "1px solid rgba(153,204,6,0.30)", borderRadius: "14px", padding: "18px" }}>
-            <div style={{ fontSize: "12px", fontWeight: 700, color: "#6b9000", marginBottom: "10px" }}>Puntos por este aporte</div>
+          <Card pad="md" accent>
+            <div style={{ fontSize: "12px", fontWeight: 700, color: "#6B9000", marginBottom: "10px" }}>
+              Puntos por este aporte
+            </div>
             <Row label="Publicar enlace" pts={PUNTOS.publicar_enlace} />
             {resumen.trim() ? <Row label="Resumen propio" pts={PUNTOS.resumen_propio} /> : null}
-            <div style={{ borderTop: "1px solid rgba(153,204,6,0.30)", marginTop: "8px", paddingTop: "8px", display: "flex", justifyContent: "space-between", fontWeight: 700, color: "#262626", fontSize: "13.5px" }}>
+            <div
+              style={{
+                borderTop: "1px solid rgba(153,204,6,0.30)",
+                marginTop: "8px",
+                paddingTop: "8px",
+                display: "flex",
+                justifyContent: "space-between",
+                fontWeight: 700,
+                color: "var(--fg-primary)",
+                fontSize: "13.5px",
+              }}
+            >
               <span>Total estimado</span>
               <span>+{puntosEstimados} pts</span>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     </form>
@@ -301,7 +479,7 @@ export default function PublishForm() {
 
 function Row({ label, pts }: { label: string; pts: number }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#404040", padding: "3px 0" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "var(--dg-gray-700)", padding: "3px 0" }}>
       <span>{label}</span>
       <span style={{ fontWeight: 700 }}>+{pts}</span>
     </div>

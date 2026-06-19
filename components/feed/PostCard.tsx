@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { MessageSquare, Link2, Sparkles } from "lucide-react";
 import type { FeedPost } from "@/lib/data/posts";
-import { initials, avatarColor, timeAgo } from "@/lib/ui";
+import { timeAgo } from "@/lib/ui";
+import Avatar from "@/components/ui/Avatar";
+import Card from "@/components/ui/Card";
 import { Semaphore, StatusBadge, CategoryPill, Hashtags } from "@/components/ui/tags";
 import FeedVote from "./FeedVote";
 
@@ -9,37 +11,15 @@ export default function PostCard({ post }: { post: FeedPost }) {
   const autorNombre = post.autor?.nombre ?? "Colaborador";
 
   return (
-    <article
-      style={{
-        background: "#fff",
-        border: "1px solid #E8E8E8",
-        borderRadius: "14px",
-        padding: "18px 20px",
-        marginBottom: "14px",
-      }}
-    >
+    <Card as="article" pad="md" hover style={{ marginBottom: "14px" }}>
       {/* header */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-        <span
-          style={{
-            width: "32px",
-            height: "32px",
-            borderRadius: "50%",
-            background: avatarColor(autorNombre),
-            color: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: 700,
-            fontSize: "12px",
-            flex: "none",
-          }}
-        >
-          {initials(autorNombre)}
-        </span>
+        <Avatar name={autorNombre} size={32} title={autorNombre} />
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: "13px", fontWeight: 700, color: "#262626" }}>{autorNombre}</div>
-          <div style={{ fontSize: "11.5px", color: "#AAAAB4" }}>{timeAgo(post.created_at)}</div>
+          <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg-primary)" }}>
+            {autorNombre}
+          </div>
+          <div style={{ fontSize: "11.5px", color: "var(--fg-muted)" }}>{timeAgo(post.created_at)}</div>
         </div>
         <Semaphore prioridad={post.prioridad} />
       </div>
@@ -53,11 +33,12 @@ export default function PostCard({ post }: { post: FeedPost }) {
       {/* title */}
       <Link href={`/post/${post.id}`}>
         <h3
+          className="dg-clamp-2"
           style={{
-            fontFamily: "'Poppins', sans-serif",
+            fontFamily: "var(--font-secondary)",
             fontSize: "17px",
             fontWeight: 700,
-            color: "#262626",
+            color: "var(--fg-primary)",
             margin: "0 0 8px",
             lineHeight: 1.3,
             letterSpacing: "-0.01em",
@@ -73,10 +54,21 @@ export default function PostCard({ post }: { post: FeedPost }) {
           href={post.url}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12.5px", color: "#30587D", marginBottom: "10px" }}
+          title={post.url}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            fontSize: "12.5px",
+            color: "var(--dg-info)",
+            marginBottom: "10px",
+            maxWidth: "100%",
+          }}
         >
-          <Link2 size={14} />
-          {prettyUrl(post.url)}
+          <Link2 size={14} aria-hidden="true" style={{ flex: "none" }} />
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {prettyUrl(post.url)}
+          </span>
         </a>
       )}
 
@@ -86,22 +78,44 @@ export default function PostCard({ post }: { post: FeedPost }) {
           style={{
             background: "rgba(153,204,6,0.10)",
             border: "1px solid rgba(153,204,6,0.30)",
-            borderRadius: "10px",
+            borderRadius: "var(--radius-md)",
             padding: "10px 12px",
             margin: "4px 0 10px",
           }}
         >
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "11px", fontWeight: 700, color: "#6b9000", marginBottom: "4px" }}>
-            <Sparkles size={12} /> Resumen
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "#6B9000",
+              marginBottom: "4px",
+            }}
+          >
+            <Sparkles size={12} aria-hidden="true" /> Resumen
           </div>
-          <p style={{ margin: 0, fontSize: "13px", color: "#404040", lineHeight: 1.5 }}>{post.resumen}</p>
+          <p className="dg-clamp-3" style={{ margin: 0, fontSize: "13px", color: "var(--dg-gray-700)", lineHeight: 1.5 }}>
+            {post.resumen}
+          </p>
         </div>
       )}
 
       {/* relevancia */}
       {post.relevancia && (
-        <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#525252", lineHeight: 1.5, borderLeft: "3px solid #99CC06", paddingLeft: "10px" }}>
-          <strong style={{ color: "#404040" }}>Por qué es relevante: </strong>
+        <p
+          className="dg-clamp-2"
+          style={{
+            margin: "0 0 8px",
+            fontSize: "13px",
+            color: "var(--fg-secondary)",
+            lineHeight: 1.5,
+            borderLeft: "3px solid var(--dg-green)",
+            paddingLeft: "10px",
+          }}
+        >
+          <strong style={{ color: "var(--dg-gray-700)" }}>Por qué es relevante: </strong>
           {post.relevancia}
         </p>
       )}
@@ -109,19 +123,37 @@ export default function PostCard({ post }: { post: FeedPost }) {
       <Hashtags etiquetas={post.etiquetas} />
 
       {/* footer */}
-      <div style={{ display: "flex", alignItems: "center", gap: "14px", marginTop: "14px", paddingTop: "12px", borderTop: "1px solid #F4F4F4" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "14px",
+          marginTop: "14px",
+          paddingTop: "12px",
+          borderTop: "1px solid var(--dg-gray-100)",
+          flexWrap: "wrap",
+        }}
+      >
         <FeedVote postId={post.id} counts={post.votosPorTipo} misVotos={post.misVotos} />
-        <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#737373" }}>
-          <MessageSquare size={15} /> {post.comentarios_count}
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            fontSize: "13px",
+            color: "var(--fg-secondary)",
+          }}
+        >
+          <MessageSquare size={15} aria-hidden="true" /> {post.comentarios_count}
         </span>
         <Link
           href={`/post/${post.id}`}
-          style={{ marginLeft: "auto", fontSize: "12.5px", fontWeight: 700, color: "#262626" }}
+          style={{ marginLeft: "auto", fontSize: "12.5px", fontWeight: 700, color: "var(--fg-primary)" }}
         >
           Ver debate →
         </Link>
       </div>
-    </article>
+    </Card>
   );
 }
 

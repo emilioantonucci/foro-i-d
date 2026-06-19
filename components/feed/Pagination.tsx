@@ -1,21 +1,5 @@
 import Link from "next/link";
 
-const btn: React.CSSProperties = {
-  padding: "8px 16px",
-  borderRadius: "999px",
-  border: "1px solid #E8E8E8",
-  background: "#fff",
-  fontSize: "13px",
-  fontWeight: 700,
-  color: "#262626",
-};
-const btnDisabled: React.CSSProperties = {
-  ...btn,
-  color: "#C9C7C2",
-  borderColor: "#F0F0EE",
-  cursor: "default",
-};
-
 export default function Pagination({
   page,
   totalPages,
@@ -34,10 +18,37 @@ export default function Pagination({
     return `/radar?${sp.toString()}`;
   };
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "14px", marginTop: "22px" }}>
-      {page > 1 ? <Link href={href(page - 1)} style={btn}>← Anterior</Link> : <span style={btnDisabled}>← Anterior</span>}
-      <span style={{ fontSize: "13px", color: "#737373" }}>Página {page} de {totalPages}</span>
-      {page < totalPages ? <Link href={href(page + 1)} style={btn}>Siguiente →</Link> : <span style={btnDisabled}>Siguiente →</span>}
-    </div>
+    <nav
+      aria-label="Paginación"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "14px",
+        marginTop: "22px",
+      }}
+    >
+      {page > 1 ? (
+        <Link href={href(page - 1)} className="dg-pagebtn" rel="prev">
+          ← Anterior
+        </Link>
+      ) : (
+        <span className="dg-pagebtn dg-pagebtn--disabled" aria-disabled="true">
+          ← Anterior
+        </span>
+      )}
+      <span style={{ fontSize: "13px", color: "var(--fg-secondary)" }} aria-current="page">
+        Página {page} de {totalPages}
+      </span>
+      {page < totalPages ? (
+        <Link href={href(page + 1)} className="dg-pagebtn" rel="next">
+          Siguiente →
+        </Link>
+      ) : (
+        <span className="dg-pagebtn dg-pagebtn--disabled" aria-disabled="true">
+          Siguiente →
+        </span>
+      )}
+    </nav>
   );
 }

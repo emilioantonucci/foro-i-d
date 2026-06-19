@@ -1,11 +1,15 @@
+import { Suspense } from "react";
 import Link from "next/link";
+import { Radar as RadarIcon, SearchX } from "lucide-react";
 import { getFeed, type FeedSort } from "@/lib/data/posts";
 import { getLeaderboard } from "@/lib/data/profiles";
 import PostCard from "@/components/feed/PostCard";
 import FeedControls from "@/components/feed/FeedControls";
 import Pagination from "@/components/feed/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
-import { initials, avatarColor } from "@/lib/ui";
+import Card from "@/components/ui/Card";
+import Avatar from "@/components/ui/Avatar";
+import { SkelRail } from "@/components/ui/skeletons";
 
 export default async function RadarPage({
   searchParams,
@@ -16,26 +20,14 @@ export default async function RadarPage({
   const sort = (sp.sort as FeedSort) ?? "recientes";
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
 
-  const [feed, leaders] = await Promise.all([
-    getFeed({ sort, categoria: sp.categoria, q: sp.q, page }),
-    getLeaderboard(),
-  ]);
+  const feed = await getFeed({ sort, categoria: sp.categoria, q: sp.q, page });
   const { posts, totalPages, total } = feed;
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "minmax(0, 1fr) 300px",
-        gap: "24px",
-        alignItems: "start",
-      }}
-    >
+    <div className="dg-two-col">
       <div>
-        <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: "22px", margin: "0 0 4px", color: "#262626", letterSpacing: "-0.01em" }}>
-          Radar de enlaces
-        </h1>
-        <p style={{ color: "#737373", fontSize: "14px", margin: "0 0 20px" }}>
+        <h1 className="dg-page-title">Radar de enlaces</h1>
+        <p className="dg-page-sub">
           {sp.q
             ? `${total} resultado${total === 1 ? "" : "s"} para “${sp.q}”`
             : "Señales recientes del equipo de Investigación y Desarrollo."}
@@ -45,6 +37,7 @@ export default async function RadarPage({
 
         {posts.length === 0 ? (
           <EmptyState
+            icon={sp.q ? SearchX : RadarIcon}
             title={sp.q ? "Sin resultados" : "Aún no hay publicaciones"}
             desc={
               sp.q
@@ -68,59 +61,61 @@ export default async function RadarPage({
         )}
       </div>
 
-      <aside
-        style={{
-          background: "#fff",
-          border: "1px solid #E8E8E8",
-          borderRadius: "14px",
-          padding: "18px",
-          position: "sticky",
-          top: "84px",
-        }}
-      >
-        <div style={{ fontSize: "11px", letterSpacing: ".1em", textTransform: "uppercase", color: "#AAAAB4", fontWeight: 700, marginBottom: "12px" }}>
-          Top contribuyentes
-        </div>
-        {leaders.length === 0 ? (
-          <p style={{ fontSize: "13px", color: "#AAAAB4", margin: 0 }}>Todavía sin actividad.</p>
-        ) : (
-          leaders.slice(0, 6).map((u, i) => (
-            <Link
-              key={u.id}
-              href={`/perfil/${u.id}`}
-              style={{ display: "flex", alignItems: "center", gap: "10px", padding: "7px 0" }}
-            >
-              <span style={{ width: "18px", fontSize: "12px", fontWeight: 700, color: "#AAAAB4" }}>{i + 1}</span>
+      <div className="dg-two-col__rail">
+        <Suspense fallback={<SkelRail />}>
+          <LeaderRail />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
+async function LeaderRail() {
+  const leaders = await getLeaderboard();
+  return (
+    <Card pad="md" style={{ position: "sticky", top: "84px" }}>
+      <div className="dg-section-label" style={{ marginBottom: "12px" }}>
+        Top contribuyentes
+      </div>
+      {leaders.length === 0 ? (
+        <p style={{ fontSize: "13px", color: "var(--fg-muted)", margin: 0 }}>
+          Todavía sin actividad.
+        </p>
+      ) : (
+        leaders.slice(0, 6).map((u, i) => (
+          <Link
+            key={u.id}
+            href={`/perfil/${u.id}`}
+            style={{ display: "flex", alignItems: "center", gap: "10px", padding: "7px 0" }}
+          >
+            <span style={{ width: "18px", fontSize: "12px", fontWeight: 700, color: "var(--fg-muted)" }}>
+              {i + 1}
+            </span>
+            <Avatar name={u.nombre} size={30} title={u.nombre ?? "Colaborador"} />
+            <span style={{ minWidth: 0, flex: 1 }}>
               <span
                 style={{
-                  width: "30px",
-                  height: "30px",
-                  borderRadius: "50%",
-                  background: avatarColor(u.nombre),
-                  color: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: "block",
+                  fontSize: "13px",
                   fontWeight: 700,
-                  fontSize: "11px",
-                  flex: "none",
+                  color: "var(--fg-primary)",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
-                {initials(u.nombre)}
+                {u.nombre ?? "Colaborador"}
               </span>
-              <span style={{ minWidth: 0, flex: 1 }}>
-                <span style={{ display: "block", fontSize: "13px", fontWeight: 700, color: "#262626", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {u.nombre ?? "Colaborador"}
-                </span>
-                <span style={{ display: "block", fontSize: "11.5px", color: "#6b9000", fontWeight: 600 }}>
-                  {u.rango}
-                </span>
+              <span style={{ display: "block", fontSize: "11.5px", color: "#6B9000", fontWeight: 600 }}>
+                {u.rango}
               </span>
-              <span style={{ fontSize: "13px", fontWeight: 700, color: "#404040" }}>{u.puntos}</span>
-            </Link>
-          ))
-        )}
-      </aside>
-    </div>
+            </span>
+            <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--dg-gray-700)" }}>
+              {u.puntos}
+            </span>
+          </Link>
+        ))
+      )}
+    </Card>
   );
 }

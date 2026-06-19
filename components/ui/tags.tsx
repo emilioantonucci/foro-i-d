@@ -1,22 +1,22 @@
 import { prioridadBySlug, estadoBySlug, nombreCategoria } from "@/lib/constants";
-
-const pill: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "5px",
-  padding: "3px 10px",
-  borderRadius: "999px",
-  fontSize: "11.5px",
-  fontWeight: 700,
-  whiteSpace: "nowrap",
-};
+import Badge from "./Badge";
 
 export function Semaphore({ prioridad }: { prioridad: string }) {
   const p = prioridadBySlug(prioridad);
   if (!p) return null;
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11.5px", fontWeight: 700, color: "#525252" }}>
-      <span style={{ width: "9px", height: "9px", borderRadius: "50%", background: p.color }} />
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        fontSize: "11.5px",
+        fontWeight: 700,
+        color: "var(--fg-secondary)",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span className="dg-badge__dot" style={{ background: p.color }} />
       Prioridad {p.nombre.toLowerCase()}
     </span>
   );
@@ -25,20 +25,12 @@ export function Semaphore({ prioridad }: { prioridad: string }) {
 export function StatusBadge({ estado }: { estado: string }) {
   const e = estadoBySlug(estado);
   if (!e) return null;
-  return (
-    <span style={{ ...pill, background: `${e.color}1F`, color: e.color }}>
-      {e.nombre}
-    </span>
-  );
+  return <Badge color={e.color}>{e.nombre}</Badge>;
 }
 
 export function CategoryPill({ categoria }: { categoria: string | null }) {
   if (!categoria) return null;
-  return (
-    <span style={{ ...pill, background: "#F4F4F4", color: "#404040" }}>
-      {nombreCategoria(categoria)}
-    </span>
-  );
+  return <Badge variant="subtle">{nombreCategoria(categoria)}</Badge>;
 }
 
 export function Hashtags({ etiquetas }: { etiquetas: string[] }) {
@@ -46,7 +38,7 @@ export function Hashtags({ etiquetas }: { etiquetas: string[] }) {
   return (
     <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px" }}>
       {etiquetas.map((t) => (
-        <span key={t} style={{ fontSize: "12px", color: "#6b9000", fontWeight: 600 }}>
+        <span key={t} style={{ fontSize: "12px", color: "#6B9000", fontWeight: 600 }}>
           #{t.replace(/^#/, "")}
         </span>
       ))}

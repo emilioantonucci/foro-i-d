@@ -12,7 +12,8 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { getLeaderboard } from "@/lib/data/profiles";
 import { RANKS, rankForPoints } from "@/lib/points";
-import { initials, avatarColor } from "@/lib/ui";
+import Card from "@/components/ui/Card";
+import Avatar from "@/components/ui/Avatar";
 
 const RANK_ICON: Record<string, LucideIcon> = {
   Observador: Eye,
@@ -37,122 +38,189 @@ export default async function RankingPage() {
   const [leaders, badgesRes, myBadgesRes] = await Promise.all([
     getLeaderboard(),
     supabase.from("badges").select("*").order("nombre"),
-    user ? supabase.from("user_badges").select("badge_id").eq("user_id", user.id) : Promise.resolve({ data: [] }),
+    user
+      ? supabase.from("user_badges").select("badge_id").eq("user_id", user.id)
+      : Promise.resolve({ data: [] }),
   ]);
   const badges = badgesRes.data ?? [];
-  const myBadgeIds = new Set((myBadgesRes.data ?? []).map((b: { badge_id: string }) => b.badge_id));
+  const myBadgeIds = new Set(
+    (myBadgesRes.data ?? []).map((b: { badge_id: string }) => b.badge_id),
+  );
 
   return (
     <div>
-      <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: "22px", margin: "0 0 4px", color: "#262626", letterSpacing: "-0.01em" }}>
-        Ranking de contribución
-      </h1>
-      <p style={{ color: "#737373", fontSize: "14px", margin: "0 0 22px" }}>
+      <h1 className="dg-page-title">Ranking de contribución</h1>
+      <p className="dg-page-sub">
         Puntos, los 7 rangos de participación e insignias del equipo.
       </p>
 
       {/* 7 rangos */}
-      <div style={{ background: "#fff", border: "1px solid #E8E8E8", borderRadius: "14px", padding: "20px", marginBottom: "18px" }}>
-        <div style={{ fontSize: "11px", letterSpacing: ".1em", textTransform: "uppercase", color: "#AAAAB4", fontWeight: 700, marginBottom: "16px" }}>
+      <Card pad="lg" style={{ marginBottom: "18px" }}>
+        <div className="dg-section-label" style={{ marginBottom: "16px" }}>
           Los 7 rangos de participación
         </div>
-        <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "4px" }}>
+        <div className="dg-hscroll" style={{ display: "flex", gap: "10px", paddingBottom: "4px" }}>
           {RANKS.map((r) => {
             const Icon = RANK_ICON[r.nombre] ?? Eye;
             const isMine = r.nombre === miRango;
             return (
               <div
                 key={r.nombre}
+                aria-current={isMine ? "true" : undefined}
                 style={{
                   flex: "1 0 130px",
                   textAlign: "center",
                   padding: "14px 10px",
-                  borderRadius: "12px",
-                  background: isMine ? "rgba(153,204,6,0.14)" : "#FAFAFA",
-                  border: isMine ? "1.5px solid #99CC06" : "1px solid #F0F0EE",
+                  borderRadius: "var(--radius-md)",
+                  background: isMine ? "rgba(153,204,6,0.14)" : "var(--dg-gray-50)",
+                  border: isMine ? "1.5px solid var(--dg-green)" : "1px solid var(--dg-gray-100)",
                 }}
               >
-                <Icon size={22} color={isMine ? "#6b9000" : "#8a8a90"} />
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#262626", marginTop: "8px" }}>{r.nombre}</div>
-                <div style={{ fontSize: "12px", color: "#AAAAB4", marginTop: "2px" }}>
-                  {isMine ? "tú · " : ""}{r.min.toLocaleString("es")} pts
+                <Icon size={22} color={isMine ? "#6B9000" : "#8A8A90"} aria-hidden="true" />
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg-primary)", marginTop: "8px" }}>
+                  {r.nombre}
+                </div>
+                <div style={{ fontSize: "12px", color: "var(--fg-muted)", marginTop: "2px" }}>
+                  {isMine ? "vos · " : ""}
+                  {r.min.toLocaleString("es")} pts
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
+      </Card>
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 320px", gap: "18px", alignItems: "start" }}>
+      <div className="dg-two-col--wide-rail">
         {/* leaderboard */}
-        <div style={{ background: "#fff", border: "1px solid #E8E8E8", borderRadius: "14px", padding: "8px 4px", overflow: "hidden" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13.5px" }}>
-            <thead>
-              <tr style={{ color: "#AAAAB4", fontSize: "11px", textTransform: "uppercase", letterSpacing: ".06em" }}>
-                <th style={{ textAlign: "left", padding: "12px 14px" }}>#</th>
-                <th style={{ textAlign: "left", padding: "12px 14px" }}>Persona</th>
-                <th style={{ textAlign: "left", padding: "12px 14px" }}>Rango</th>
-                <th style={{ textAlign: "right", padding: "12px 14px" }}>Aportes</th>
-                <th style={{ textAlign: "right", padding: "12px 14px" }}>Coment.</th>
-                <th style={{ textAlign: "right", padding: "12px 14px" }}>Insignias</th>
-                <th style={{ textAlign: "right", padding: "12px 14px" }}>Puntos</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leaders.length === 0 ? (
-                <tr><td colSpan={7} style={{ padding: "24px", textAlign: "center", color: "#AAAAB4" }}>Todavía sin participación.</td></tr>
-              ) : (
-                leaders.map((u, i) => {
-                  const isMe = u.id === user?.id;
-                  return (
-                    <tr key={u.id} style={{ borderTop: "1px solid #F4F4F4", background: isMe ? "rgba(153,204,6,0.08)" : "transparent" }}>
-                      <td style={{ padding: "11px 14px", fontWeight: 700, color: "#AAAAB4" }}>{i + 1}</td>
-                      <td style={{ padding: "11px 14px" }}>
-                        <Link href={`/perfil/${u.id}`} style={{ display: "flex", alignItems: "center", gap: "9px" }}>
-                          <span style={{ width: "28px", height: "28px", borderRadius: "50%", background: avatarColor(u.nombre), color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "11px", flex: "none" }}>
-                            {initials(u.nombre)}
-                          </span>
-                          <span style={{ fontWeight: 700, color: "#262626" }}>{u.nombre ?? "Colaborador"}{isMe ? " · tú" : ""}</span>
-                        </Link>
-                      </td>
-                      <td style={{ padding: "11px 14px", color: "#6b9000", fontWeight: 600 }}>{u.rango}</td>
-                      <td style={{ padding: "11px 14px", textAlign: "right", color: "#525252" }}>{u.aportes}</td>
-                      <td style={{ padding: "11px 14px", textAlign: "right", color: "#525252" }}>{u.comentarios}</td>
-                      <td style={{ padding: "11px 14px", textAlign: "right", color: "#525252" }}>{u.insignias}</td>
-                      <td style={{ padding: "11px 14px", textAlign: "right", fontWeight: 700, color: "#262626" }}>{u.puntos.toLocaleString("es")}</td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+        <div>
+          {/* Desktop: table */}
+          <Card pad="sm" className="dg-only-desktop">
+            <table className="dg-lb-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Persona</th>
+                  <th>Rango</th>
+                  <th className="num">Aportes</th>
+                  <th className="num">Coment.</th>
+                  <th className="num">Insignias</th>
+                  <th className="num">Puntos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaders.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ padding: "24px", textAlign: "center", color: "var(--fg-muted)" }}>
+                      Todavía sin participación.
+                    </td>
+                  </tr>
+                ) : (
+                  leaders.map((u, i) => {
+                    const isMe = u.id === user?.id;
+                    return (
+                      <tr key={u.id} className={isMe ? "me" : undefined}>
+                        <td style={{ fontWeight: 700, color: "var(--fg-muted)" }}>{i + 1}</td>
+                        <td>
+                          <Link href={`/perfil/${u.id}`} style={{ display: "flex", alignItems: "center", gap: "9px" }}>
+                            <Avatar name={u.nombre} size={28} title={u.nombre ?? "Colaborador"} />
+                            <span style={{ fontWeight: 700, color: "var(--fg-primary)" }}>
+                              {u.nombre ?? "Colaborador"}
+                              {isMe ? " · vos" : ""}
+                            </span>
+                          </Link>
+                        </td>
+                        <td style={{ color: "#6B9000", fontWeight: 600 }}>{u.rango}</td>
+                        <td className="num" style={{ color: "var(--fg-secondary)" }}>{u.aportes}</td>
+                        <td className="num" style={{ color: "var(--fg-secondary)" }}>{u.comentarios}</td>
+                        <td className="num" style={{ color: "var(--fg-secondary)" }}>{u.insignias}</td>
+                        <td className="num" style={{ fontWeight: 700, color: "var(--fg-primary)" }}>
+                          {u.puntos.toLocaleString("es")}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </Card>
+
+          {/* Mobile: stacked cards */}
+          <div className="dg-lb-cards">
+            {leaders.length === 0 ? (
+              <Card pad="md">
+                <p style={{ margin: 0, fontSize: "13px", color: "var(--fg-muted)", textAlign: "center" }}>
+                  Todavía sin participación.
+                </p>
+              </Card>
+            ) : (
+              leaders.map((u, i) => {
+                const isMe = u.id === user?.id;
+                return (
+                  <Link
+                    key={u.id}
+                    href={`/perfil/${u.id}`}
+                    className={`dg-card dg-card--pad-md ${isMe ? "dg-card--accent" : ""}`.trim()}
+                    style={{ display: "block" }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span style={{ width: "20px", fontWeight: 700, color: "var(--fg-muted)" }}>{i + 1}</span>
+                      <Avatar name={u.nombre} size={34} title={u.nombre ?? "Colaborador"} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, color: "var(--fg-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {u.nombre ?? "Colaborador"}
+                          {isMe ? " · vos" : ""}
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#6B9000", fontWeight: 600 }}>{u.rango}</div>
+                      </div>
+                      <div style={{ fontWeight: 700, color: "var(--fg-primary)" }}>{u.puntos.toLocaleString("es")} pts</div>
+                    </div>
+                    <div style={{ display: "flex", gap: "16px", marginTop: "10px", fontSize: "12px", color: "var(--fg-secondary)" }}>
+                      <span>{u.aportes} aportes</span>
+                      <span>{u.comentarios} coment.</span>
+                      <span>{u.insignias} insignias</span>
+                    </div>
+                  </Link>
+                );
+              })
+            )}
+          </div>
         </div>
 
         {/* badges */}
-        <div style={{ background: "#fff", border: "1px solid #E8E8E8", borderRadius: "14px", padding: "18px" }}>
-          <div style={{ fontSize: "11px", letterSpacing: ".1em", textTransform: "uppercase", color: "#AAAAB4", fontWeight: 700, marginBottom: "14px" }}>
-            Insignias del programa
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-            {badges.map((b: { id: string; nombre: string; descripcion: string | null }) => {
-              const unlocked = myBadgeIds.has(b.id);
-              return (
-                <div
-                  key={b.id}
-                  title={b.descripcion ?? ""}
-                  style={{
-                    background: unlocked ? "rgba(153,204,6,0.12)" : "#FAFAFA",
-                    border: unlocked ? "1px solid rgba(153,204,6,0.4)" : "1px solid #F0F0EE",
-                    borderRadius: "10px",
-                    padding: "12px",
-                    opacity: unlocked ? 1 : 0.55,
-                  }}
-                >
-                  <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#262626", lineHeight: 1.25 }}>{b.nombre}</div>
-                </div>
-              );
-            })}
-          </div>
+        <div className="dg-two-col__rail">
+          <Card pad="md">
+            <div className="dg-section-label" style={{ marginBottom: "14px" }}>
+              Insignias del programa
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              {badges.map((b: { id: string; nombre: string; descripcion: string | null }) => {
+                const unlocked = myBadgeIds.has(b.id);
+                return (
+                  <div
+                    key={b.id}
+                    style={{
+                      background: unlocked ? "rgba(153,204,6,0.12)" : "var(--dg-gray-50)",
+                      border: unlocked
+                        ? "1px solid rgba(153,204,6,0.4)"
+                        : "1px solid var(--dg-gray-100)",
+                      borderRadius: "var(--radius-md)",
+                      padding: "12px",
+                      opacity: unlocked ? 1 : 0.7,
+                    }}
+                  >
+                    <div style={{ fontSize: "12.5px", fontWeight: 700, color: "var(--fg-primary)", lineHeight: 1.25 }}>
+                      {b.nombre}
+                    </div>
+                    {b.descripcion && (
+                      <div style={{ fontSize: "11.5px", color: "var(--fg-secondary)", lineHeight: 1.4, marginTop: "4px" }}>
+                        {b.descripcion}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
         </div>
       </div>
     </div>

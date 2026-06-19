@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import OpportunityPanel from "@/components/trends/OpportunityPanel";
 import ImpactUrgencyMatrix from "@/components/trends/ImpactUrgencyMatrix";
 import { CategoryBars } from "@/components/dashboard/Charts";
+import Card from "@/components/ui/Card";
 import type { CountRow, TraccionRow } from "@/lib/data/dashboard";
 
 export default async function TendenciasPage() {
@@ -15,22 +16,20 @@ export default async function TendenciasPage() {
 
   return (
     <div>
-      <h1 style={{ fontFamily: "'Poppins', sans-serif", fontSize: "22px", margin: "0 0 4px", color: "#262626", letterSpacing: "-0.01em" }}>
-        Mapa de tendencias
-      </h1>
-      <p style={{ color: "#737373", fontSize: "14px", margin: "0 0 22px" }}>
+      <h1 className="dg-page-title">Mapa de tendencias</h1>
+      <p className="dg-page-sub">
         Del foro al radar estratégico — impacto × urgencia y oportunidades emergentes.
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 360px", gap: "18px", alignItems: "start" }}>
+      <div className="dg-two-col--wide-rail">
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <ImpactUrgencyMatrix posts={traccion} />
-          <div style={{ background: "#fff", border: "1px solid #E8E8E8", borderRadius: "14px", padding: "20px" }}>
-            <div style={{ fontSize: "11px", letterSpacing: ".1em", textTransform: "uppercase", color: "#AAAAB4", fontWeight: 700, marginBottom: "14px" }}>
+          <Card pad="lg">
+            <div className="dg-section-label" style={{ marginBottom: "14px" }}>
               Distribución por categoría
             </div>
             <CategoryBars data={categorias} />
-          </div>
+          </Card>
         </div>
 
         <OpportunityPanel />

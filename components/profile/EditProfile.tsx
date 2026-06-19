@@ -3,17 +3,12 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateProfileAction } from "@/app/(app)/actions";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Field, { Input, Textarea } from "@/components/ui/Field";
+import { useToast } from "@/components/ui/Toast";
 
-const input: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  border: "1px solid #E0DED9",
-  borderRadius: "10px",
-  fontSize: "14px",
-  outline: "none",
-  marginBottom: "12px",
-};
-const label: React.CSSProperties = { display: "block", fontSize: "13px", fontWeight: 700, color: "#404040", marginBottom: "6px" };
+const LIMITS = { nombre: 80, area: 60, bio: 280 };
 
 export default function EditProfile({
   nombre,
@@ -27,53 +22,112 @@ export default function EditProfile({
   perfilCompleto: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [n, setN] = useState(nombre);
   const [b, setB] = useState(bio);
   const [a, setA] = useState(area);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  const nombreError =
+    touched && n.trim().length < 2
+      ? "Ingresá tu nombre (mínimo 2 caracteres)."
+      : undefined;
+  const canSave = n.trim().length >= 2;
+
   function save() {
-    setMsg(null);
+    setTouched(true);
+    if (!canSave) return;
     startTransition(async () => {
       const r = await updateProfileAction({ nombre: n, bio: b, area: a });
-      if (r.error) setMsg(r.error);
-      else {
-        setMsg("Perfil actualizado.");
+      if (r.error) {
+        toast.error(r.error);
+      } else {
+        toast.success("Perfil actualizado");
         router.refresh();
+        setOpen(false);
       }
     });
   }
 
   if (!open) {
     return (
-      <div style={{ background: "#fff", border: "1px solid #E8E8E8", borderRadius: "14px", padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: "13.5px", color: "#525252" }}>
-          {perfilCompleto ? "Tu perfil está completo." : "Completá tu perfil (bio + área) y sumá +20 puntos."}
+      <Card
+        pad="md"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}
+      >
+        <span style={{ fontSize: "13.5px", color: "var(--fg-secondary)" }}>
+          {perfilCompleto
+            ? "Tu perfil está completo."
+            : "Completá tu perfil (bio + área) y sumá +20 puntos."}
         </span>
-        <button onClick={() => setOpen(true)} className="dg-btn dg-btn--outline" style={{ fontSize: "13px" }}>
+        <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
           Editar perfil
-        </button>
-      </div>
+        </Button>
+      </Card>
     );
   }
 
   return (
-    <div style={{ background: "#fff", border: "1px solid #E8E8E8", borderRadius: "14px", padding: "20px" }}>
-      <label style={label}>Nombre</label>
-      <input value={n} onChange={(e) => setN(e.target.value)} style={input} />
-      <label style={label}>Área</label>
-      <input value={a} onChange={(e) => setA(e.target.value)} placeholder="Ej. Innovación Pedagógica" style={input} />
-      <label style={label}>Bio</label>
-      <textarea value={b} onChange={(e) => setB(e.target.value)} rows={3} placeholder="Contá en qué te especializás" style={{ ...input, resize: "vertical" }} />
-      {msg && <p style={{ fontSize: "12.5px", color: msg.includes("actualizado") ? "#38761D" : "#C62A2F", margin: "0 0 10px" }}>{msg}</p>}
-      <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-        <button onClick={() => setOpen(false)} className="dg-btn dg-btn--ghost" style={{ fontSize: "13px" }}>Cerrar</button>
-        <button onClick={save} disabled={pending} className="dg-btn dg-btn--primary" style={{ fontSize: "13px", opacity: pending ? 0.7 : 1 }}>
-          {pending ? "Guardando…" : "Guardar"}
-        </button>
+    <Card pad="lg">
+      <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <Field
+          id="edit-nombre"
+          label="Nombre"
+          required
+          error={nombreError}
+          count={{ value: n.length, max: LIMITS.nombre }}
+        >
+          <Input
+            value={n}
+            maxLength={LIMITS.nombre}
+            onChange={(e) => setN(e.target.value)}
+            onBlur={() => setTouched(true)}
+          />
+        </Field>
+        <Field
+          id="edit-area"
+          label="Área"
+          hint="Ej. Innovación Pedagógica"
+          count={{ value: a.length, max: LIMITS.area }}
+        >
+          <Input
+            value={a}
+            maxLength={LIMITS.area}
+            placeholder="Ej. Innovación Pedagógica"
+            onChange={(e) => setA(e.target.value)}
+          />
+        </Field>
+        <Field
+          id="edit-bio"
+          label="Bio"
+          hint="Contá en qué te especializás"
+          count={{ value: b.length, max: LIMITS.bio }}
+        >
+          <Textarea
+            value={b}
+            maxLength={LIMITS.bio}
+            rows={3}
+            placeholder="Contá en qué te especializás"
+            onChange={(e) => setB(e.target.value)}
+          />
+        </Field>
       </div>
-    </div>
+      <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "16px" }}>
+        <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+          Cerrar
+        </Button>
+        <Button size="sm" onClick={save} loading={pending} disabled={!canSave}>
+          Guardar
+        </Button>
+      </div>
+    </Card>
   );
 }

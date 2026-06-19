@@ -1,0 +1,563 @@
+/* =========================================================================
+   doinGlobal — App UI layer
+   Reusable component classes + a11y/responsive utilities for Radar I+D.
+   Built on the tokens from colors_and_type.css. Imported after site.css.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   Accessibility utilities
+   ------------------------------------------------------------------------- */
+
+/* Visually hidden but available to screen readers. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Skip-to-content link: off-screen until focused. */
+.skip-link {
+  position: fixed;
+  top: var(--space-3);
+  left: var(--space-3);
+  z-index: var(--z-toast);
+  transform: translateY(-150%);
+  background: var(--dg-black);
+  color: var(--dg-white);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-small);
+  font-weight: var(--fw-bold);
+  transition: transform var(--dur-base) var(--ease-standard);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+/* Consistent keyboard focus ring across all interactive elements.
+   Mouse users don't see it (focus-visible only). */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+/* -------------------------------------------------------------------------
+   Motion preferences
+   ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Skeleton / shimmer (loading states)
+   ------------------------------------------------------------------------- */
+@keyframes dg-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.dg-skel {
+  display: block;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    100deg,
+    var(--dg-gray-100) 30%,
+    var(--dg-gray-200) 50%,
+    var(--dg-gray-100) 70%
+  );
+  background-size: 200% 100%;
+  animation: dg-shimmer 1.4s var(--ease-in-out) infinite;
+}
+.dg-skel--text { height: 0.9em; border-radius: var(--radius-pill); }
+.dg-skel--circle { border-radius: var(--radius-pill); }
+
+/* -------------------------------------------------------------------------
+   Line clamping (truncate multi-line text cleanly)
+   ------------------------------------------------------------------------- */
+.dg-clamp-1,
+.dg-clamp-2,
+.dg-clamp-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dg-clamp-1 { -webkit-line-clamp: 1; }
+.dg-clamp-2 { -webkit-line-clamp: 2; }
+.dg-clamp-3 { -webkit-line-clamp: 3; }
+
+/* =========================================================================
+   PRIMITIVES — Button
+   Extends the .dg-btn suite from site.css with app sizes + states.
+   ========================================================================= */
+.dg-btn { white-space: nowrap; text-decoration: none; }
+.dg-btn--sm { padding: 8px 14px; font-size: 13px; }
+.dg-btn--block { width: 100%; justify-content: center; }
+.dg-btn--danger { background: var(--dg-error); color: var(--dg-white); }
+.dg-btn--danger:hover { background: var(--dg-error-dark); }
+.dg-btn:disabled,
+.dg-btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+/* lift on hover only for solid buttons, and only when motion is allowed */
+.dg-btn--primary:not(:disabled):hover,
+.dg-btn--secondary:not(:disabled):hover,
+.dg-btn--danger:not(:disabled):hover { box-shadow: var(--shadow-sm); }
+
+/* Icon-only ghost button (clear search, close, hamburger, etc.) */
+.dg-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard);
+}
+.dg-iconbtn:hover { background: var(--dg-gray-100); color: var(--fg-primary); }
+.dg-iconbtn--sm { width: 30px; height: 30px; }
+.dg-iconbtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* =========================================================================
+   PRIMITIVES — Form fields
+   ========================================================================= */
+.dg-field { display: flex; flex-direction: column; gap: 6px; }
+.dg-label {
+  font-family: var(--font-primary);
+  font-size: 13px;
+  font-weight: var(--fw-bold);
+  color: var(--fg-primary);
+}
+.dg-label__req { color: var(--dg-error); margin-left: 3px; }
+
+.dg-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--fg-primary);
+  background: var(--dg-white);
+  outline: none;
+  transition: border-color var(--dur-fast) var(--ease-standard),
+              box-shadow var(--dur-fast) var(--ease-standard);
+}
+.dg-input::placeholder { color: var(--fg-muted); }
+.dg-input:hover:not(:focus) { border-color: var(--border-strong); }
+.dg-input:focus,
+.dg-input:focus-visible {
+  border-color: var(--dg-green);
+  box-shadow: var(--focus-ring);
+}
+.dg-input--invalid { border-color: var(--dg-error); }
+.dg-input--invalid:focus { box-shadow: 0 0 0 3px rgba(198, 42, 47, 0.25); }
+.dg-input:disabled { background: var(--dg-gray-100); cursor: not-allowed; opacity: 0.7; }
+
+textarea.dg-input { resize: vertical; min-height: 92px; line-height: var(--lh-body); }
+select.dg-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.dg-hint { font-size: 12px; color: var(--fg-muted); line-height: 1.45; }
+.dg-error-text {
+  font-size: 12px;
+  color: var(--dg-error);
+  font-weight: var(--fw-semibold);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.dg-field__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dg-charcount { font-size: 11.5px; color: var(--fg-muted); margin-left: auto; flex: none; }
+.dg-charcount--over { color: var(--dg-error); font-weight: var(--fw-bold); }
+
+/* =========================================================================
+   PRIMITIVES — Card surface
+   ========================================================================= */
+.dg-card {
+  background: var(--dg-white);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+}
+.dg-card--pad-sm { padding: 14px 16px; }
+.dg-card--pad-md { padding: 18px 20px; }
+.dg-card--pad-lg { padding: 24px 26px; }
+.dg-card--hover {
+  transition: transform var(--dur-base) var(--ease-standard),
+              box-shadow var(--dur-base) var(--ease-standard),
+              border-color var(--dur-base) var(--ease-standard);
+}
+.dg-card--hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-strong);
+}
+.dg-card--accent { border-color: rgba(153, 204, 6, 0.4); background: rgba(153, 204, 6, 0.06); }
+
+/* =========================================================================
+   PRIMITIVES — Avatar
+   ========================================================================= */
+.dg-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  color: var(--dg-white);
+  font-family: var(--font-primary);
+  font-weight: var(--fw-bold);
+  flex: none;
+  line-height: 1;
+  user-select: none;
+  overflow: hidden;
+}
+
+/* =========================================================================
+   PRIMITIVES — Badge / pill
+   ========================================================================= */
+.dg-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-primary);
+  font-size: 11.5px;
+  font-weight: var(--fw-bold);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.dg-badge--sm { padding: 2px 8px; font-size: 11px; }
+.dg-badge__dot { width: 8px; height: 8px; border-radius: var(--radius-pill); flex: none; }
+
+/* =========================================================================
+   APP SHELL — responsive layout + mobile off-canvas drawer
+   ========================================================================= */
+.dg-shell { display: flex; min-height: 100vh; background: #F4F4F2; }
+.dg-shell__main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.dg-shell__content { flex: 1; padding: 24px 28px 56px; }
+
+.dg-shell__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-backdrop);
+  background: rgba(38, 38, 38, 0.45);
+  animation: dg-fade-in var(--dur-base) var(--ease-standard);
+}
+@keyframes dg-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Sidebar — desktop: sticky column */
+.dg-sidebar {
+  width: 250px;
+  flex: none;
+  background: var(--dg-white);
+  border-right: 1px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.dg-sidebar__close { display: none; }
+
+.dg-navlink {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 13px;
+  border-radius: var(--radius-md);
+  color: var(--fg-secondary);
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: background var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard);
+}
+.dg-navlink:hover { background: var(--dg-gray-100); color: var(--fg-primary); }
+.dg-navlink--active {
+  background: rgba(153, 204, 6, 0.14);
+  color: var(--fg-primary);
+  font-weight: 700;
+}
+
+/* Topbar */
+.dg-topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border-default);
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.dg-topbar__menu { display: none; }
+.dg-topbar__search { position: relative; flex: 1; max-width: 520px; min-width: 0; }
+
+/* Tablet / mobile: sidebar becomes an off-canvas drawer */
+@media (max-width: 900px) {
+  .dg-shell__content { padding: 18px 16px 48px; }
+  .dg-topbar { padding: 10px 16px; }
+  .dg-topbar__menu { display: inline-flex; }
+  .dg-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100dvh;
+    z-index: var(--z-drawer);
+    transform: translateX(-100%);
+    transition: transform var(--dur-base) var(--ease-standard);
+    box-shadow: var(--shadow-lg);
+  }
+  .dg-sidebar--open { transform: translateX(0); }
+  .dg-sidebar__close { display: inline-flex; margin-left: auto; }
+}
+
+/* Small phones: collapse the publish button to icon-only */
+@media (max-width: 560px) {
+  .dg-topbar__publish-label { display: none; }
+  .dg-topbar__publish { padding: 9px !important; }
+}
+
+/* =========================================================================
+   RESPONSIVE GRID HELPERS — two-column page layouts collapse on mobile
+   ========================================================================= */
+.dg-two-col {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: start;
+}
+.dg-two-col--wide-rail { grid-template-columns: 1fr 360px; }
+@media (max-width: 900px) {
+  .dg-two-col,
+  .dg-two-col--wide-rail { grid-template-columns: 1fr; }
+  /* the side rail drops below the main column on mobile */
+  .dg-two-col__rail { order: 2; }
+}
+/* Grid items must be allowed to shrink below their content's min-content,
+   otherwise a wide child (chip row, long URL) forces horizontal overflow. */
+.dg-two-col > *,
+.dg-two-col--wide-rail > * { min-width: 0; }
+
+/* KPI grid: 4 → 2 → 1 columns */
+.dg-grid-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+@media (max-width: 760px) { .dg-grid-kpis { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 440px) { .dg-grid-kpis { grid-template-columns: 1fr; } }
+
+/* Two equal halves that stack on mobile */
+.dg-grid-halves { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 760px) { .dg-grid-halves { grid-template-columns: 1fr; } }
+
+/* Section eyebrow label reused across cards/panels */
+.dg-section-label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  font-weight: 700;
+}
+
+/* Page heading block */
+.dg-page-title {
+  font-family: var(--font-secondary);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--fg-primary);
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+.dg-page-sub { color: var(--fg-secondary); font-size: 14px; margin: 0 0 20px; line-height: 1.5; }
+
+/* Horizontal scroll container with a subtle fade affordance on the right */
+.dg-hscroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  min-width: 0; /* shrink (and scroll) instead of forcing parent width in flex rows */
+}
+
+/* =========================================================================
+   TOASTS
+   ========================================================================= */
+.dg-toast-viewport {
+  position: fixed;
+  z-index: var(--z-toast);
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(360px, calc(100vw - 32px));
+  pointer-events: none;
+}
+@media (max-width: 560px) {
+  .dg-toast-viewport { left: 16px; right: 16px; bottom: 16px; max-width: none; }
+}
+.dg-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--dg-black);
+  color: var(--dg-white);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-lg);
+  font-size: 13.5px;
+  line-height: 1.45;
+  animation: dg-toast-in var(--dur-base) var(--ease-standard);
+}
+.dg-toast__icon { flex: none; margin-top: 1px; }
+.dg-toast__msg { flex: 1; }
+.dg-toast__close {
+  flex: none;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+}
+.dg-toast__close:hover { color: var(--dg-white); }
+.dg-toast--success .dg-toast__icon { color: var(--dg-green); }
+.dg-toast--error .dg-toast__icon { color: #FF6B6B; }
+.dg-toast--info .dg-toast__icon { color: #7DB5FF; }
+@keyframes dg-toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================================
+   VOTE CHIPS (feed + post detail)
+   ========================================================================= */
+.dg-votechip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-primary);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--border-default);
+  background: var(--dg-white);
+  color: var(--fg-secondary);
+  transition: background var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard),
+              transform var(--dur-fast) var(--ease-standard);
+}
+.dg-votechip--sm { padding: 6px 11px; font-size: 12px; }
+.dg-votechip:hover:not(:disabled) { border-color: var(--border-strong); }
+.dg-votechip:active:not(:disabled) { transform: scale(0.96); }
+.dg-votechip--active { border-width: 1.5px; }
+.dg-votechip:disabled { cursor: default; opacity: 0.7; }
+
+/* =========================================================================
+   FILTER TABS + CATEGORY CHIPS (feed controls)
+   ========================================================================= */
+.dg-tab {
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid var(--border-default);
+  background: var(--dg-white);
+  color: var(--fg-secondary);
+  transition: background var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard);
+}
+.dg-tab:hover { border-color: var(--border-strong); color: var(--fg-primary); }
+.dg-tab--active { background: var(--dg-black); color: var(--dg-white); border-color: var(--dg-black); }
+
+.dg-chip {
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid var(--border-default);
+  background: var(--dg-white);
+  color: var(--fg-secondary);
+  transition: background var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-fast) var(--ease-standard),
+              color var(--dur-fast) var(--ease-standard);
+}
+.dg-chip:hover { border-color: var(--border-strong); color: var(--fg-primary); }
+.dg-chip--active { background: var(--dg-green); color: var(--dg-black); border-color: var(--dg-green); }
+
+/* Pagination buttons */
+.dg-pagebtn {
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-default);
+  background: var(--dg-white);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg-primary);
+  transition: border-color var(--dur-fast) var(--ease-standard),
+              background var(--dur-fast) var(--ease-standard);
+}
+.dg-pagebtn:hover { border-color: var(--border-strong); background: var(--dg-gray-50); }
+.dg-pagebtn--disabled {
+  color: var(--dg-gray-300);
+  border-color: var(--dg-gray-100);
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Responsive visibility toggles (used by the ranking table ↔ cards).
+   NOTE: don't set `display` inline on these — inline styles beat the media
+   query and the element stays hidden. Use the dedicated layout class below. */
+.dg-only-mobile { display: none; }
+.dg-lb-cards { display: none; }
+@media (max-width: 720px) {
+  .dg-only-desktop { display: none !important; }
+  .dg-only-mobile { display: block; }
+  .dg-lb-cards { display: flex; flex-direction: column; gap: 10px; }
+}
+
+/* Leaderboard table */
+.dg-lb-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.dg-lb-table thead tr {
+  color: var(--fg-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.dg-lb-table th { text-align: left; padding: 12px 14px; font-weight: 700; }
+.dg-lb-table th.num, .dg-lb-table td.num { text-align: right; }
+.dg-lb-table td { padding: 11px 14px; border-top: 1px solid var(--dg-gray-100); }
+.dg-lb-table tr.me { background: rgba(153, 204, 6, 0.10); }

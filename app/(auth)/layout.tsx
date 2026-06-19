@@ -31,14 +31,14 @@ export default function AuthLayout({
             alt="doinGlobal"
             style={{ height: "26px", width: "auto" }}
           />
-          <span style={{ width: "1px", height: "24px", background: "#C9C7C2" }} />
+          <span style={{ width: "1px", height: "24px", background: "var(--border-strong)" }} />
           <span
             style={{
-              fontFamily: "'Poppins', sans-serif",
+              fontFamily: "var(--font-secondary)",
               fontWeight: 700,
               fontSize: "18px",
               letterSpacing: "-0.01em",
-              color: "#262626",
+              color: "var(--fg-primary)",
             }}
           >
             I+D Hub
@@ -50,7 +50,7 @@ export default function AuthLayout({
             textAlign: "center",
             marginTop: "20px",
             fontSize: "12px",
-            color: "#AAAAB4",
+            color: "var(--fg-muted)",
           }}
         >
           Sistema interno de inteligencia colectiva para I+D · doinGlobal

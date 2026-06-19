@@ -38,5 +38,12 @@ export default async function AppLayout({
     rango: rankForPoints(puntos).nombre,
   };
 
-  return <AppShell profile={profile}>{children}</AppShell>;
+  return (
+    <>
+      <a href="#main" className="skip-link">
+        Saltar al contenido
+      </a>
+      <AppShell profile={profile}>{children}</AppShell>
+    </>
+  );
 }

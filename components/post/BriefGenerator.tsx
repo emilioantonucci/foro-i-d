@@ -2,31 +2,45 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Loader2, Copy, Check, Save } from "lucide-react";
+import { FileText, Copy, Check, Save } from "lucide-react";
 import { saveAiOutputAction } from "@/app/(app)/actions";
 import type { Brief } from "@/lib/types";
+import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: "10px" }}>
-      <div style={{ fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", color: "#6b9000", marginBottom: "3px" }}>{title}</div>
-      <div style={{ fontSize: "12.5px", color: "#404040", lineHeight: 1.5 }}>{children}</div>
+      <div
+        style={{
+          fontSize: "10.5px",
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: ".06em",
+          color: "#6B9000",
+          marginBottom: "3px",
+        }}
+      >
+        {title}
+      </div>
+      <div style={{ fontSize: "12.5px", color: "var(--dg-gray-700)", lineHeight: 1.5 }}>
+        {children}
+      </div>
     </div>
   );
 }
 
 export default function BriefGenerator({ postId }: { postId: string }) {
   const router = useRouter();
+  const toast = useToast();
   const [data, setData] = useState<Brief | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
   const [savePending, startSave] = useTransition();
 
   async function generate() {
     setLoading(true);
-    setError(null);
     try {
       const r = await fetch("/api/ai/brief", {
         method: "POST",
@@ -38,7 +52,7 @@ export default function BriefGenerator({ postId }: { postId: string }) {
       setData(j.data);
       setSaved(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al generar el brief.");
+      toast.error(e instanceof Error ? e.message : "Error al generar el brief.");
     } finally {
       setLoading(false);
     }
@@ -48,9 +62,11 @@ export default function BriefGenerator({ postId }: { postId: string }) {
     if (!data) return;
     startSave(async () => {
       const r = await saveAiOutputAction("brief", data, postId);
-      if (r.error) setError(r.error);
-      else {
+      if (r.error) {
+        toast.error(r.error);
+      } else {
         setSaved(true);
+        toast.success("Brief guardado");
         router.refresh();
       }
     });
@@ -64,43 +80,87 @@ export default function BriefGenerator({ postId }: { postId: string }) {
   }
 
   return (
-    <div style={{ background: "#262626", borderRadius: "14px", padding: "18px", color: "#fff" }}>
-      <div style={{ fontSize: "11px", letterSpacing: ".1em", textTransform: "uppercase", color: "#99CC06", fontWeight: 700, marginBottom: "10px" }}>
+    <div style={{ background: "var(--dg-black)", borderRadius: "var(--radius-lg)", padding: "18px", color: "var(--dg-white)" }}>
+      <div
+        style={{
+          fontSize: "11px",
+          letterSpacing: ".1em",
+          textTransform: "uppercase",
+          color: "var(--dg-green)",
+          fontWeight: 700,
+          marginBottom: "10px",
+        }}
+      >
         Del link al proyecto
       </div>
-      <button onClick={generate} disabled={loading} className="dg-btn dg-btn--primary" style={{ width: "100%", justifyContent: "center", fontSize: "13px" }}>
-        {loading ? <Loader2 size={14} className="spin" /> : <FileText size={14} />}
+      <Button
+        block
+        size="sm"
+        onClick={generate}
+        loading={loading}
+        icon={!loading ? <FileText size={14} aria-hidden="true" /> : undefined}
+      >
         {loading ? "Generando…" : data ? "Regenerar brief" : "Generar brief de oportunidad"}
-      </button>
-
-      {error && <p style={{ color: "#FF9A9C", fontSize: "12px", margin: "10px 0 0" }}>{error}</p>}
+      </Button>
 
       {data && (
-        <div style={{ background: "#fff", borderRadius: "10px", padding: "14px", marginTop: "12px" }}>
-          <div style={{ fontFamily: "'Poppins',sans-serif", fontWeight: 700, fontSize: "14px", color: "#262626", marginBottom: "10px" }}>
+        <div style={{ background: "var(--dg-white)", borderRadius: "var(--radius-md)", padding: "14px", marginTop: "12px" }}>
+          <div
+            style={{
+              fontFamily: "var(--font-secondary)",
+              fontWeight: 700,
+              fontSize: "14px",
+              color: "var(--fg-primary)",
+              marginBottom: "10px",
+            }}
+          >
             {data.tituloOportunidad}
           </div>
           <Section title="Contexto">{data.contexto}</Section>
           <Section title="Evidencia interna">
-            <ul style={{ margin: 0, paddingLeft: "16px" }}>{data.evidenciaInterna.map((e, i) => <li key={i}>{e}</li>)}</ul>
+            <ul style={{ margin: 0, paddingLeft: "16px" }}>
+              {data.evidenciaInterna.map((e, i) => (
+                <li key={i}>{e}</li>
+              ))}
+            </ul>
           </Section>
           <Section title="Hipótesis de mercado">{data.hipotesisMercado}</Section>
           <Section title="Aplicación académica">{data.aplicacionAcademica}</Section>
           <Section title="Aplicación comercial">{data.aplicacionComercial}</Section>
           <Section title="Riesgos">
-            <ul style={{ margin: 0, paddingLeft: "16px" }}>{data.riesgos.map((e, i) => <li key={i}>{e}</li>)}</ul>
+            <ul style={{ margin: 0, paddingLeft: "16px" }}>
+              {data.riesgos.map((e, i) => (
+                <li key={i}>{e}</li>
+              ))}
+            </ul>
           </Section>
           <Section title="Próximos pasos">
-            <ul style={{ margin: 0, paddingLeft: "16px" }}>{data.proximosPasos.map((e, i) => <li key={i}>{e}</li>)}</ul>
+            <ul style={{ margin: 0, paddingLeft: "16px" }}>
+              {data.proximosPasos.map((e, i) => (
+                <li key={i}>{e}</li>
+              ))}
+            </ul>
           </Section>
 
-          <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
-            <button onClick={save} disabled={savePending || saved} className="dg-btn dg-btn--secondary" style={{ fontSize: "12px" }}>
-              {saved ? <Check size={13} /> : <Save size={13} />} {saved ? "Guardado" : savePending ? "Guardando…" : "Guardar"}
-            </button>
-            <button onClick={copy} className="dg-btn dg-btn--outline" style={{ fontSize: "12px" }}>
-              {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Copiado" : "Copiar"}
-            </button>
+          <div style={{ display: "flex", gap: "8px", marginTop: "12px", flexWrap: "wrap" }}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={save}
+              loading={savePending}
+              disabled={saved}
+              icon={saved ? <Check size={13} aria-hidden="true" /> : <Save size={13} aria-hidden="true" />}
+            >
+              {saved ? "Guardado" : "Guardar"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={copy}
+              icon={copied ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
+            >
+              {copied ? "Copiado" : "Copiar"}
+            </Button>
           </div>
         </div>
       )}

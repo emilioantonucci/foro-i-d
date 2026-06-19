@@ -26,6 +26,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local dev artifacts
+dev-server.log
+.claude/
+
 # typescript
 *.tsbuildinfo
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PRIORIDADES } from "@/lib/constants";
 import type { TraccionRow } from "@/lib/data/dashboard";
+import Card from "@/components/ui/Card";
 
 const prioOrden = (slug: string) => PRIORIDADES.find((p) => p.slug === slug)?.orden ?? 2;
 const prioColor = (slug: string) => PRIORIDADES.find((p) => p.slug === slug)?.color ?? "#AAAAB4";
@@ -15,8 +16,17 @@ function Quadrant({
   label: string;
 }) {
   return (
-    <div style={{ position: "absolute", width: "50%", height: "50%", background: tint, ...pos }}>
-      <span style={{ position: "absolute", margin: "8px", fontSize: "10.5px", fontWeight: 700, color: "#8a8a90", ...labelCorner(pos) }}>
+    <div style={{ position: "absolute", width: "50%", height: "50%", background: tint, ...pos }} aria-hidden="true">
+      <span
+        style={{
+          position: "absolute",
+          margin: "8px",
+          fontSize: "10.5px",
+          fontWeight: 700,
+          color: "#8A8A90",
+          ...labelCorner(pos),
+        }}
+      >
         {label}
       </span>
     </div>
@@ -36,33 +46,57 @@ export default function ImpactUrgencyMatrix({ posts }: { posts: TraccionRow[] })
   const maxVotos = Math.max(1, ...top.map((p) => p.votos));
 
   return (
-    <div style={{ background: "#fff", border: "1px solid #E8E8E8", borderRadius: "14px", padding: "20px" }}>
-      <div style={{ fontSize: "11px", letterSpacing: ".1em", textTransform: "uppercase", color: "#AAAAB4", fontWeight: 700, marginBottom: "14px" }}>
+    <Card pad="lg">
+      <div className="dg-section-label" style={{ marginBottom: "14px" }}>
         Matriz impacto × urgencia
       </div>
 
       <div style={{ display: "flex", gap: "10px" }}>
         {/* Y axis label */}
         <div style={{ display: "flex", alignItems: "center" }}>
-          <span style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", fontSize: "11px", fontWeight: 700, color: "#AAAAB4", letterSpacing: ".05em" }}>
+          <span
+            style={{
+              writingMode: "vertical-rl",
+              transform: "rotate(180deg)",
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "var(--fg-muted)",
+              letterSpacing: ".05em",
+            }}
+          >
             Impacto →
           </span>
         </div>
 
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           {/* plot */}
-          <div style={{ position: "relative", height: "420px", border: "1px solid #EEEDE8", borderRadius: "10px", overflow: "hidden", background: "#FCFCFB" }}>
+          <div
+            role="img"
+            aria-label={
+              top.length === 0
+                ? "Matriz de impacto y urgencia sin datos todavía."
+                : `Matriz de impacto (votos) por urgencia (prioridad) con ${top.length} temas.`
+            }
+            style={{
+              position: "relative",
+              height: "420px",
+              border: "1px solid var(--dg-gray-200)",
+              borderRadius: "var(--radius-md)",
+              overflow: "hidden",
+              background: "var(--dg-gray-50)",
+            }}
+          >
             <Quadrant pos={{ top: 0, left: 0 }} tint="rgba(153,204,6,0.07)" label="Observar / roadmap" />
             <Quadrant pos={{ top: 0, right: 0 }} tint="rgba(198,42,47,0.06)" label="Actuar ya" />
             <Quadrant pos={{ bottom: 0, left: 0 }} tint="transparent" label="Archivar" />
             <Quadrant pos={{ bottom: 0, right: 0 }} tint="rgba(255,186,26,0.07)" label="Reactivo" />
 
             {/* center axes */}
-            <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: "1px", background: "#EAE9E4" }} />
-            <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: "1px", background: "#EAE9E4" }} />
+            <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: "1px", background: "var(--dg-gray-200)" }} aria-hidden="true" />
+            <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: "1px", background: "var(--dg-gray-200)" }} aria-hidden="true" />
 
             {top.length === 0 && (
-              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#AAAAB4", fontSize: "13px" }}>
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--fg-muted)", fontSize: "13px", textAlign: "center", padding: "0 20px" }}>
                 Sin tracción todavía — publicá y votá para poblar el radar.
               </div>
             )}
@@ -76,6 +110,7 @@ export default function ImpactUrgencyMatrix({ posts }: { posts: TraccionRow[] })
                 <Link
                   key={p.id}
                   href={`/post/${p.id}`}
+                  aria-label={`${p.titulo}: ${p.votos} votos, ${p.comentarios} comentarios`}
                   title={`${p.titulo} · ${p.votos} votos · ${p.comentarios} comentarios`}
                   style={{
                     position: "absolute",
@@ -92,8 +127,8 @@ export default function ImpactUrgencyMatrix({ posts }: { posts: TraccionRow[] })
                     justifyContent: "center",
                     fontSize: "11px",
                     fontWeight: 700,
-                    border: "2px solid #fff",
-                    boxShadow: "0 2px 6px rgba(0,0,0,.12)",
+                    border: "2px solid var(--dg-white)",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
                   {p.traccion}
@@ -102,15 +137,16 @@ export default function ImpactUrgencyMatrix({ posts }: { posts: TraccionRow[] })
             })}
           </div>
           {/* X axis label */}
-          <div style={{ textAlign: "right", fontSize: "11px", fontWeight: 700, color: "#AAAAB4", marginTop: "6px", letterSpacing: ".05em" }}>
+          <div style={{ textAlign: "right", fontSize: "11px", fontWeight: 700, color: "var(--fg-muted)", marginTop: "6px", letterSpacing: ".05em" }}>
             Urgencia (prioridad) →
           </div>
         </div>
       </div>
 
-      <p style={{ fontSize: "11.5px", color: "#AAAAB4", margin: "10px 0 0" }}>
-        Posición: urgencia = prioridad · impacto = votos recibidos. Tamaño y número = tracción (votos + comentarios).
+      <p style={{ fontSize: "11.5px", color: "var(--fg-muted)", margin: "10px 0 0" }}>
+        Posición: urgencia = prioridad · impacto = votos recibidos. Tamaño y número = tracción
+        (votos + comentarios).
       </p>
-    </div>
+    </Card>
   );
 }

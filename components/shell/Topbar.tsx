@@ -1,65 +1,79 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Search, Plus, X } from "lucide-react";
+import { Search, Plus, X, Menu } from "lucide-react";
+import Button from "@/components/ui/Button";
+import IconButton from "@/components/ui/IconButton";
 
-export default function Topbar() {
+export default function Topbar({ onMenu }: { onMenu?: () => void }) {
   const sp = useSearchParams();
   const q = sp.get("q") ?? "";
 
   return (
-    <header
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 20,
-        background: "rgba(255,255,255,0.96)",
-        backdropFilter: "blur(8px)",
-        borderBottom: "1px solid #E8E8E8",
-        padding: "12px 28px",
-        display: "flex",
-        alignItems: "center",
-        gap: "16px",
-      }}
-    >
-      <form action="/radar" method="get" style={{ position: "relative", flex: 1, maxWidth: "520px" }}>
+    <header className="dg-topbar">
+      {onMenu && (
+        <IconButton
+          label="Abrir menú"
+          className="dg-topbar__menu"
+          onClick={onMenu}
+        >
+          <Menu size={20} aria-hidden="true" />
+        </IconButton>
+      )}
+
+      <form action="/radar" method="get" className="dg-topbar__search" role="search">
+        <label htmlFor="topbar-search" className="sr-only">
+          Buscar en el radar
+        </label>
         <Search
           size={17}
-          color="#AAAAB4"
+          color="var(--fg-muted)"
+          aria-hidden="true"
           style={{ position: "absolute", left: "13px", top: "50%", transform: "translateY(-50%)" }}
         />
         <input
+          id="topbar-search"
           key={q}
           name="q"
           defaultValue={q}
           placeholder="Buscar enlaces, temas, personas…"
           style={{
             width: "100%",
-            padding: "9px 34px 9px 38px",
-            border: "1px solid #E8E8E8",
-            borderRadius: "999px",
+            padding: "9px 38px 9px 38px",
+            border: "1px solid var(--border-default)",
+            borderRadius: "var(--radius-pill)",
             fontSize: "13.5px",
-            color: "#262626",
-            background: "#F7F7F5",
+            color: "var(--fg-primary)",
+            background: "var(--dg-gray-50)",
             outline: "none",
           }}
         />
         {q && (
-          <Link
+          <IconButton
+            label="Limpiar búsqueda"
             href="/radar"
-            title="Limpiar búsqueda"
-            style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", display: "flex" }}
+            size="sm"
+            style={{
+              position: "absolute",
+              right: "5px",
+              top: "50%",
+              transform: "translateY(-50%)",
+            }}
           >
-            <X size={15} color="#AAAAB4" />
-          </Link>
+            <X size={15} aria-hidden="true" />
+          </IconButton>
         )}
       </form>
 
       <div style={{ marginLeft: "auto" }}>
-        <Link href="/publicar" className="dg-btn dg-btn--primary" style={{ fontSize: "13px", padding: "9px 16px" }}>
-          <Plus size={16} /> Publicar enlace
-        </Link>
+        <Button
+          href="/publicar"
+          size="sm"
+          className="dg-topbar__publish"
+          icon={<Plus size={16} aria-hidden="true" />}
+        >
+          <span className="dg-topbar__publish-label">Publicar enlace</span>
+        </Button>
       </div>
     </header>
   );

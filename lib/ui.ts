@@ -9,13 +9,18 @@ export function initials(name: string | null | undefined): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+// Deterministic avatar palette, derived from the brand state/info colors
+// (see colors_and_type.css). Kept here so every avatar — sidebar, cards,
+// profiles — shares one consistent, brand-aligned set.
 const AVATAR_COLORS = [
-  "#30587D",
-  "#6b9000",
-  "#B45F06",
-  "#073763",
-  "#38761D",
-  "#525252",
+  "#30587D", // info
+  "#6B9000", // green (dark variant)
+  "#B45F06", // warning-dark
+  "#073763", // info-dark
+  "#38761D", // success-dark
+  "#525252", // gray-600
+  "#7A4FA0", // violet accent (variety)
+  "#9A3C57", // berry accent (variety)
 ];
 
 /** Deterministic avatar background color derived from a name. */

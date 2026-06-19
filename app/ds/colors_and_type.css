@@ -125,6 +125,25 @@
   --dur-fast:   120ms;
   --dur-base:   200ms;
   --dur-slow:   320ms;
+
+  /* ===== Z-INDEX SCALE ===== */
+  --z-base:     0;
+  --z-sticky:   20;
+  --z-header:   50;
+  --z-backdrop: 55;
+  --z-drawer:   60;
+  --z-modal:    70;
+  --z-toast:    80;
+
+  /* ===== FOCUS RING (keyboard accessibility) ===== */
+  --focus-ring:       0 0 0 3px rgba(153, 204, 6, 0.45);
+  --focus-ring-dark:  0 0 0 3px rgba(255, 255, 255, 0.55);
+
+  /* ===== BREAKPOINTS (reference; applied via @media in ui.css) =====
+     mobile:  ≤ 640px
+     tablet:  ≤ 900px   (sidebar collapses to off-canvas drawer below this)
+     desktop: > 900px
+  --------------------------------------------------------------------- */
 }
 
 /* =========================================================================

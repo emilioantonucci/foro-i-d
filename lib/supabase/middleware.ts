@@ -2,7 +2,12 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "./env";
 
-const AUTH_PATHS = ["/login", "/register"];
+// Public routes that an unauthenticated user may reach.
+const PUBLIC_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
+// A signed-in user landing on these is bounced to the app. (Password-recovery
+// routes are intentionally excluded: the recovery link creates a transient
+// session and the user must stay to set a new password.)
+const REDIRECT_IF_AUTHED = ["/login", "/register"];
 
 /**
  * Refreshes the Supabase session cookie on every request AND enforces route
@@ -34,15 +39,16 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isAuthRoute = AUTH_PATHS.some((p) => path.startsWith(p));
+  const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
+  const redirectIfAuthed = REDIRECT_IF_AUTHED.some((p) => path.startsWith(p));
 
-  if (!user && !isAuthRoute) {
+  if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  if (user && redirectIfAuthed) {
     const url = request.nextUrl.clone();
     url.pathname = "/radar";
     return NextResponse.redirect(url);
