@@ -15,6 +15,7 @@ ${input.rawText ? `Contenido / contexto:\n"""${input.rawText.slice(0, 7000)}"""`
 
 Devolvé un JSON con esta forma exacta:
 {
+  "titulo": "título breve y pertinente del recurso (4 a 8 palabras, máx 70 caracteres). Debe describir el tema, NO ser una frase larga. NO repitas ni empieces igual que el 'resumen': si el resumen arranca con una frase, el título tiene que decir algo distinto y más corto",
   "resumen": "2 a 3 frases que resuman el recurso",
   "ideasClave": ["3 a 5 ideas clave, frases breves"],
   "aplicacionIyD": "cómo podría aplicarse en I+D / educación superior (1-2 frases)",

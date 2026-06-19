@@ -80,6 +80,7 @@ export interface Badge {
 // ----- AI output shapes (validated by zod in lib/gemini/schemas.ts) -----
 
 export interface LinkSummary {
+  titulo: string;
   resumen: string;
   ideasClave: string[];
   aplicacionIyD: string;

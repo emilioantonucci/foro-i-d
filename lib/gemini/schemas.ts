@@ -3,6 +3,7 @@ import { z } from "zod";
 // Defaults make the schemas tolerant to minor model omissions (MVP resilience).
 
 export const LinkSummarySchema = z.object({
+  titulo: z.string().default(""),
   resumen: z.string().default(""),
   ideasClave: z.array(z.string()).default([]),
   aplicacionIyD: z.string().default(""),

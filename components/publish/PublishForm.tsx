@@ -84,7 +84,11 @@ export default function PublishForm() {
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error ?? "No se pudo analizar.");
       const data = json.data as LinkSummary;
-      if (!titulo.trim() && data.resumen) setTitulo(deriveTitle(data));
+      if (!titulo.trim()) {
+        const aiTitle = data.titulo.trim();
+        if (aiTitle) setTitulo(aiTitle);
+        else if (data.resumen) setTitulo(deriveTitle(data));
+      }
       if (data.resumen) setResumen(data.resumen);
       if (data.aplicacionIyD) setRelevancia(data.aplicacionIyD);
       if (data.categoriaSugerida) {
