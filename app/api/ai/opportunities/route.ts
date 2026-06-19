@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
-import { requireUser, unauthorized, aiErrorResponse } from "@/lib/api";
+import { requireUser, unauthorized, aiErrorResponse, aiRateLimitResponse } from "@/lib/api";
 import { detectOpportunities } from "@/lib/gemini";
 import { getRecentPostsForAI } from "@/lib/data/posts";
 
 export async function POST(req: Request) {
   const { user } = await requireUser();
   if (!user) return unauthorized();
+
+  const limited = aiRateLimitResponse(user.id);
+  if (limited) return limited;
 
   const posts = await getRecentPostsForAI(40);
   if (posts.length === 0) {

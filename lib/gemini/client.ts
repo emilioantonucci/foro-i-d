@@ -11,7 +11,16 @@ export class GeminiConfigError extends Error {}
 export class GeminiRequestError extends Error {}
 export class GeminiOutputError extends Error {}
 
-const DEFAULT_MODEL = "gemini-flash-latest";
+// Modelo gratuito FIJO. No usar el alias `-latest`: salta de versión sin aviso y
+// puede degradar latencia/estabilidad (auditado: gemini-flash-latest dio 503 y ~76s).
+// gemini-3.1-flash-lite es free tier, estable (~2s) y válido en los 4 features.
+// Verificado en scripts/audit-ai.ts. Fallback equivalente estable: gemini-2.5-flash-lite.
+const DEFAULT_MODEL = "gemini-3.1-flash-lite";
+
+// Corta requests colgadas (el fetch no tenía timeout explícito).
+const REQUEST_TIMEOUT_MS = 30_000;
+// Acota la salida (el feature más largo, brief, usa ~700 tokens) sin truncar.
+const MAX_OUTPUT_TOKENS = 2048;
 
 export function getGeminiConfig() {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -40,6 +49,7 @@ export async function callGeminiJSON(prompt: string): Promise<string> {
   let lastTransient: GeminiRequestError | null = null;
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const startedAt = Date.now();
     let res: Response;
     try {
       res = await fetch(url, {
@@ -53,11 +63,26 @@ export async function callGeminiJSON(prompt: string): Promise<string> {
           generationConfig: {
             responseMimeType: "application/json",
             temperature: 0.4,
+            maxOutputTokens: MAX_OUTPUT_TOKENS,
           },
         }),
         cache: "no-store",
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
-    } catch {
+    } catch (e) {
+      // Timeout/abort -> transitorio (reintentable); cualquier otra cosa -> conexión.
+      const aborted =
+        e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
+      if (aborted) {
+        lastTransient = new GeminiRequestError(
+          "La IA tardó demasiado en responder. Probá de nuevo en unos segundos.",
+        );
+        if (attempt < MAX_ATTEMPTS) {
+          await sleep(800 * attempt);
+          continue;
+        }
+        throw lastTransient;
+      }
       throw new GeminiRequestError("No se pudo conectar con el servicio de IA.");
     }
 
@@ -77,7 +102,11 @@ export async function callGeminiJSON(prompt: string): Promise<string> {
 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
-      throw new GeminiRequestError(`La IA respondió con error ${res.status}. ${body.slice(0, 300)}`);
+      // No filtramos el cuerpo crudo de Gemini al cliente: log server-side + mensaje genérico.
+      console.error(`[gemini] ${model} HTTP ${res.status}: ${body.slice(0, 300)}`);
+      throw new GeminiRequestError(
+        `El servicio de IA respondió con un error (${res.status}). Probá de nuevo en unos minutos.`,
+      );
     }
 
     let json: unknown;
@@ -93,6 +122,7 @@ export async function callGeminiJSON(prompt: string): Promise<string> {
     /* eslint-enable @typescript-eslint/no-explicit-any */
 
     if (!text) throw new GeminiOutputError("La IA devolvió una respuesta vacía.");
+    console.log(`[gemini] ${model} ok (${Date.now() - startedAt}ms, intento ${attempt})`);
     return text;
   }
 

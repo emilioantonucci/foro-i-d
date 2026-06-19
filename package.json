@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "audit:ai": "tsx scripts/audit-ai.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -22,6 +23,7 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "supabase": "^2.107.0",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }
 }

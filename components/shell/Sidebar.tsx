@@ -71,8 +71,8 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(function Sidebar(
         <Image
           src="/assets/logo-primary.png"
           alt="doinGlobal"
-          width={94}
-          height={19}
+          width={1822}
+          height={258}
           style={{ height: "19px", width: "auto" }}
         />
         <span style={{ width: "1px", height: "18px", background: "var(--border-strong)" }} />

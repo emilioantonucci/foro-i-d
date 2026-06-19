@@ -86,14 +86,25 @@ export default function Field({
       .filter(Boolean)
       .join(" ") || undefined;
 
+  // Si el hijo es un elemento host (div, input nativo…) no le inyectamos
+  // `invalid`: solo lo entienden nuestros controles (Input/Textarea/Select) y
+  // React avisaría que no es un atributo DOM válido. `id`/`aria-*` sí son
+  // válidos en cualquier elemento.
+  const isHostElement =
+    isValidElement(children) && typeof (children as ReactElement).type === "string";
+
   const control = isValidElement(children)
     ? cloneElement(children as ReactElement<Record<string, unknown>>, {
         id,
         "aria-invalid": error ? true : undefined,
         "aria-describedby": describedBy,
-        invalid:
-          !!error ||
-          ((children as ReactElement<{ invalid?: boolean }>).props.invalid ?? false),
+        ...(isHostElement
+          ? {}
+          : {
+              invalid:
+                !!error ||
+                ((children as ReactElement<{ invalid?: boolean }>).props.invalid ?? false),
+            }),
       })
     : children;
 

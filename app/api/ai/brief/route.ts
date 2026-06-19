@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
-import { requireUser, unauthorized, aiErrorResponse } from "@/lib/api";
+import { requireUser, unauthorized, aiErrorResponse, aiRateLimitResponse } from "@/lib/api";
 import { generateBrief } from "@/lib/gemini";
 
 export async function POST(req: Request) {
   const { supabase, user } = await requireUser();
   if (!user) return unauthorized();
+
+  const limited = aiRateLimitResponse(user.id);
+  if (limited) return limited;
 
   const body = await req.json().catch(() => ({}));
   const postIds: string[] = Array.isArray(body.postIds) ? body.postIds : [];

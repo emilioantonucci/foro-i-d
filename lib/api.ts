@@ -1,6 +1,7 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkAiRateLimit } from "@/lib/ratelimit";
 import {
   GeminiConfigError,
   GeminiOutputError,
@@ -17,6 +18,22 @@ export async function requireUser() {
 
 export function unauthorized() {
   return NextResponse.json({ ok: false, error: "No autorizado." }, { status: 401 });
+}
+
+/**
+ * Aplica el límite de uso de IA por usuario. Devuelve una respuesta 429 lista
+ * para retornar si se superó el límite, o `null` si puede continuar.
+ */
+export function aiRateLimitResponse(userId: string) {
+  const rl = checkAiRateLimit(userId);
+  if (rl.ok) return null;
+  return NextResponse.json(
+    {
+      ok: false,
+      error: `Estás usando la IA demasiado seguido. Probá de nuevo en ${rl.retryAfter}s.`,
+    },
+    { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+  );
 }
 
 export function aiErrorResponse(e: unknown) {
