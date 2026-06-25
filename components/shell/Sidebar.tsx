@@ -4,7 +4,7 @@ import { forwardRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Radar, Grid2x2, Trophy, BarChart3, LogOut, X } from "lucide-react";
+import { Radar, Shuffle, Grid2x2, Trophy, BarChart3, LogOut, X } from "lucide-react";
 import type { ShellProfile } from "./AppShell";
 import Avatar from "@/components/ui/Avatar";
 import IconButton from "@/components/ui/IconButton";
@@ -17,6 +17,7 @@ interface NavItem {
 
 const PRIMARY: NavItem[] = [
   { href: "/radar", label: "Radar de enlaces", Icon: Radar },
+  { href: "/datos", label: "Datos random", Icon: Shuffle },
 ];
 
 const CONOCIMIENTO: NavItem[] = [

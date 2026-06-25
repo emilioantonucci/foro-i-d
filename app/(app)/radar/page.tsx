@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Radar as RadarIcon, SearchX } from "lucide-react";
 import { getFeed, type FeedSort } from "@/lib/data/posts";
 import { getLeaderboard } from "@/lib/data/profiles";
+import SectionTabs from "@/components/feed/SectionTabs";
 import PostCard from "@/components/feed/PostCard";
 import FeedControls from "@/components/feed/FeedControls";
 import Pagination from "@/components/feed/Pagination";
@@ -26,6 +27,7 @@ export default async function RadarPage({
   return (
     <div className="dg-two-col">
       <div>
+        <SectionTabs />
         <h1 className="dg-page-title">Radar de enlaces</h1>
         <p className="dg-page-sub">
           {sp.q

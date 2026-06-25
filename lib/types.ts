@@ -20,6 +20,46 @@ export interface Profile {
   fecha_actualizacion: string;
   // derived server-side (v_profiles view) — optional on raw rows
   rango?: string;
+  // email-notification preferences (added in migration 0005) — optional on
+  // rows selected before the columns existed / on partial projections
+  notif_email_enabled?: boolean;
+  notif_nueva_publicacion?: boolean;
+  notif_comentario?: boolean;
+  notif_resumen_semanal?: boolean;
+  notif_rango?: boolean;
+  unsubscribe_token?: string;
+}
+
+// ----- Email notifications (migration 0005) -----
+
+export type NotificationTipo =
+  | "nueva_publicacion"
+  | "comentario"
+  | "resumen_semanal"
+  | "rango"
+  | "insignia";
+
+export type NotificationEmailStatus = "pending" | "sent" | "skipped" | "failed";
+
+export interface Notification {
+  id: string;
+  recipient_id: string;
+  tipo: NotificationTipo;
+  post_id: string | null;
+  payload: Record<string, unknown>;
+  email_status: NotificationEmailStatus;
+  leido: boolean;
+  created_at: string;
+  sent_at: string | null;
+}
+
+/** Per-user toggles backing the preferences UI. Maps 1:1 to profiles columns. */
+export interface NotifPrefs {
+  notif_email_enabled: boolean;
+  notif_nueva_publicacion: boolean;
+  notif_comentario: boolean;
+  notif_resumen_semanal: boolean;
+  notif_rango: boolean;
 }
 
 export interface Post {
@@ -54,6 +94,39 @@ export interface Vote {
   user_id: string;
   tipo_voto: string;
   created_at: string;
+}
+
+// ----- "Datos random" (migration 0006) — subforo distendido, aislado del
+// radar. Esquema más simple: sin estado/prioridad/gobernanza. -----
+
+export type DatoTipo =
+  | "libro"
+  | "articulo"
+  | "video"
+  | "podcast"
+  | "dato_curioso"
+  | "recomendacion"
+  | "otro";
+
+export interface Dato {
+  id: string;
+  user_id: string;
+  titulo: string;
+  tipo: DatoTipo;
+  url: string | null;
+  descripcion: string | null;
+  etiquetas: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DatoComment {
+  id: string;
+  dato_id: string;
+  user_id: string;
+  comentario: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export type AiOutputTipo = "resumen" | "sintesis" | "oportunidad" | "brief";

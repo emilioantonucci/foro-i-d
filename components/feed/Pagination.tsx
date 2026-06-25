@@ -4,10 +4,12 @@ export default function Pagination({
   page,
   totalPages,
   params,
+  basePath = "/radar",
 }: {
   page: number;
   totalPages: number;
   params: Record<string, string | undefined>;
+  basePath?: string;
 }) {
   if (totalPages <= 1) return null;
   const href = (p: number) => {
@@ -15,7 +17,7 @@ export default function Pagination({
     Object.entries({ ...params, page: String(p) }).forEach(([k, v]) => {
       if (v) sp.set(k, v);
     });
-    return `/radar?${sp.toString()}`;
+    return `${basePath}?${sp.toString()}`;
   };
   return (
     <nav
