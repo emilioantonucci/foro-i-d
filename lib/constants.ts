@@ -77,6 +77,23 @@ export const TIPOS_VOTO: TipoVoto[] = [
   { slug: "descartar", nombre: "Descartar", es_positivo: false, icon: "x" },
 ];
 
+// "Datos random" — tipos de aporte distendido (select del formulario + badge).
+export interface DatoTipoMeta {
+  slug: string;
+  nombre: string;
+  color: string; // badge tint
+}
+
+export const DATO_TIPOS: DatoTipoMeta[] = [
+  { slug: "libro", nombre: "Libro", color: "#6B9000" },
+  { slug: "articulo", nombre: "Artículo", color: "#30587D" },
+  { slug: "video", nombre: "Video", color: "#C62A2F" },
+  { slug: "podcast", nombre: "Podcast", color: "#8A4FBF" },
+  { slug: "dato_curioso", nombre: "Dato curioso", color: "#FF8A1A" },
+  { slug: "recomendacion", nombre: "Recomendación", color: "#1F9E8F" },
+  { slug: "otro", nombre: "Otro", color: "#8A8A90" },
+];
+
 // Suggested "posible aplicación interna" options (multi-select in the create form).
 export const APLICACIONES_INTERNAS: string[] = [
   "Nuevo certificado / programa",
@@ -95,3 +112,7 @@ export const prioridadBySlug = (slug?: string | null) =>
   PRIORIDADES.find((p) => p.slug === slug);
 export const tipoVotoBySlug = (slug?: string | null) =>
   TIPOS_VOTO.find((t) => t.slug === slug);
+export const datoTipoBySlug = (slug?: string | null) =>
+  DATO_TIPOS.find((t) => t.slug === slug);
+export const nombreDatoTipo = (slug?: string | null) =>
+  DATO_TIPOS.find((t) => t.slug === slug)?.nombre ?? slug ?? "";

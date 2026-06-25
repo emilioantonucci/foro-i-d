@@ -80,6 +80,39 @@ export const publishSchema = z.object({
     .optional(),
 });
 
+// "Datos random" (subforo distendido). Esquema simple: sin categoría
+// obligatoria, prioridad ni estado. `tipo` acota la clase de aporte.
+export const DATO_LIMITS = { titulo: 140, descripcion: 1200 } as const;
+
+export const DATO_TIPO_SLUGS = [
+  "libro",
+  "articulo",
+  "video",
+  "podcast",
+  "dato_curioso",
+  "recomendacion",
+  "otro",
+] as const;
+
+export const datoSchema = z.object({
+  titulo: z
+    .string()
+    .trim()
+    .min(5, "El título es muy corto (mínimo 5 caracteres).")
+    .max(DATO_LIMITS.titulo, `Máximo ${DATO_LIMITS.titulo} caracteres.`),
+  tipo: z.enum(DATO_TIPO_SLUGS),
+  url: z
+    .string()
+    .trim()
+    .pipe(z.url("Ingresá una URL válida (https://…)."))
+    .or(z.literal(""))
+    .optional(),
+  descripcion: z
+    .string()
+    .max(DATO_LIMITS.descripcion, "La descripción es demasiado larga.")
+    .optional(),
+});
+
 export const COMMENT_MAX = 1000;
 export const commentSchema = z.object({
   comentario: z
@@ -88,3 +121,14 @@ export const commentSchema = z.object({
     .min(1, "El comentario está vacío.")
     .max(COMMENT_MAX, `Máximo ${COMMENT_MAX} caracteres.`),
 });
+
+// Email-notification preferences. Partial so the UI can patch single toggles.
+export const notifPrefsSchema = z
+  .object({
+    notif_email_enabled: z.boolean(),
+    notif_nueva_publicacion: z.boolean(),
+    notif_comentario: z.boolean(),
+    notif_resumen_semanal: z.boolean(),
+    notif_rango: z.boolean(),
+  })
+  .partial();

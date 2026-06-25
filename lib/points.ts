@@ -70,4 +70,8 @@ export const PUNTOS = {
   marcado_relevante: 25,
   sintesis: 30,
   oportunidad: 40,
+  // "Datos random" (subforo distendido) — más livianos que los del radar.
+  publicar_dato: 5,
+  comentar_dato: 3,
+  like_dato: 2,
 } as const;

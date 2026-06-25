@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Bell, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile, getProfileStats } from "@/lib/data/profiles";
 import { getPostsByUser } from "@/lib/data/posts";
@@ -35,6 +37,30 @@ export default async function PerfilPage() {
         area={profile.area ?? ""}
         perfilCompleto={profile.perfil_completo}
       />
+      <Link
+        href="/perfil/notificaciones"
+        className="dg-card dg-card--pad-md"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "12px",
+          textDecoration: "none",
+        }}
+      >
+        <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <Bell size={18} color="#6B9000" aria-hidden="true" />
+          <span>
+            <span style={{ display: "block", fontSize: "14px", fontWeight: 700, color: "var(--fg-primary)" }}>
+              Notificaciones por email
+            </span>
+            <span style={{ display: "block", fontSize: "12.5px", color: "var(--fg-secondary)" }}>
+              Elegí qué avisos recibís en tu correo.
+            </span>
+          </span>
+        </span>
+        <ChevronRight size={18} color="#8A8A90" aria-hidden="true" />
+      </Link>
     </div>
   );
 }
