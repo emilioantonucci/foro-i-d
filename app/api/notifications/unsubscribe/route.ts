@@ -1,8 +1,13 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
-// No-login, one-click unsubscribe. The `unsubscribe_token` IS the credential.
-// This route is excluded from the auth proxy (see proxy.ts matcher), so it's
-// reachable straight from an email footer.
+// No-login unsubscribe. The `unsubscribe_token` IS the credential. This route is
+// excluded from the auth proxy (see proxy.ts matcher), so it's reachable straight
+// from an email footer.
+//
+// Two-step on purpose: GET only SHOWS a confirmation page (it never mutates), so
+// link pre-scanners (Outlook SafeLinks, antivirus, chat unfurlers) that fetch the
+// URL can't silently unsubscribe anyone. The actual opt-out happens on the POST
+// submitted by the confirmation button.
 export const dynamic = "force-dynamic";
 
 // Maps a notification type to the preference column it switches off.
@@ -14,8 +19,25 @@ const COL_BY_TIPO: Record<string, string> = {
   insignia: "notif_rango",
 };
 
-function page(heading: string, message: string, status: number): Response {
-  const prefs = `${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "")}/perfil/notificaciones`;
+// Human label per type, for the confirmation copy.
+const LABEL_BY_TIPO: Record<string, string> = {
+  nueva_publicacion: "los avisos de nuevas publicaciones",
+  comentario: "los avisos de comentarios en tus publicaciones",
+  resumen_semanal: "el resumen semanal",
+  rango: "los avisos de rango e insignias",
+  insignia: "los avisos de rango e insignias",
+};
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function shell(heading: string, inner: string, status: number): Response {
   const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Radar I+D — Notificaciones</title></head>
@@ -24,8 +46,7 @@ function page(heading: string, message: string, status: number): Response {
     <div style="font-size:13px;font-weight:700;color:#6B9000;margin-bottom:18px;">Radar I+D · doinGlobal</div>
     <div style="background:#fff;border:1px solid #e7e7e4;border-radius:14px;padding:28px 26px;">
       <h1 style="font-size:20px;margin:0 0 10px;">${heading}</h1>
-      <p style="font-size:14px;line-height:1.6;color:#737373;margin:0 0 18px;">${message}</p>
-      <a href="${prefs}" style="display:inline-block;background:#6B9000;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:10px 18px;border-radius:8px;">Gestionar mis notificaciones</a>
+      ${inner}
     </div>
   </div>
 </body></html>`;
@@ -35,10 +56,75 @@ function page(heading: string, message: string, status: number): Response {
   });
 }
 
+function managePrefsUrl(): string {
+  return `${(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "")}/perfil/notificaciones`;
+}
+
+/** Simple message page (used for errors and the final confirmation). */
+function page(heading: string, message: string, status: number): Response {
+  const inner = `<p style="font-size:14px;line-height:1.6;color:#737373;margin:0 0 18px;">${message}</p>
+      <a href="${managePrefsUrl()}" style="display:inline-block;background:#6B9000;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:10px 18px;border-radius:8px;">Gestionar mis notificaciones</a>`;
+  return shell(heading, inner, status);
+}
+
+/** Confirmation page: a POST form so the opt-out needs an explicit click. */
+function confirmPage(token: string, tipo: string): Response {
+  const que = LABEL_BY_TIPO[tipo] ?? "todos los correos del Radar I+D";
+  const inner = `<p style="font-size:14px;line-height:1.6;color:#737373;margin:0 0 18px;">¿Confirmás que querés dejar de recibir <strong>${escapeHtml(que)}</strong>? Podés reactivar tus avisos cuando quieras desde tus preferencias.</p>
+      <form method="POST" action="/api/notifications/unsubscribe" style="margin:0;">
+        <input type="hidden" name="token" value="${escapeHtml(token)}"/>
+        <input type="hidden" name="tipo" value="${escapeHtml(tipo)}"/>
+        <button type="submit" style="border:none;cursor:pointer;background:#6B9000;color:#fff;font-weight:700;font-size:14px;padding:10px 18px;border-radius:8px;">Confirmar baja</button>
+        <a href="${managePrefsUrl()}" style="display:inline-block;margin-left:10px;color:#737373;text-decoration:none;font-weight:600;font-size:14px;padding:10px 4px;">Cancelar</a>
+      </form>`;
+  return shell("Gestionar notificaciones", inner, 200);
+}
+
+/** Looks up the profile id behind an unsubscribe token. */
+async function profileIdForToken(token: string): Promise<string | null> {
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return null;
+  }
+  const { data: prof } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("unsubscribe_token", token)
+    .maybeSingle();
+  return prof?.id ?? null;
+}
+
+// GET: only renders a confirmation page. Never mutates.
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
   const tipo = url.searchParams.get("tipo") ?? "";
+
+  if (!token) {
+    return page("Enlace inválido", "Falta el identificador de baja en el enlace.", 400);
+  }
+
+  const profId = await profileIdForToken(token);
+  if (!profId) {
+    return page("Enlace inválido", "No encontramos tu suscripción. Es posible que ya te hayas dado de baja.", 404);
+  }
+
+  return confirmPage(token, tipo);
+}
+
+// POST: performs the opt-out after the explicit confirmation click.
+export async function POST(req: Request) {
+  let token = "";
+  let tipo = "";
+  try {
+    const form = await req.formData();
+    token = String(form.get("token") ?? "");
+    tipo = String(form.get("tipo") ?? "");
+  } catch {
+    return page("No se pudo procesar", "Solicitud inválida.", 400);
+  }
 
   if (!token) {
     return page("Enlace inválido", "Falta el identificador de baja en el enlace.", 400);

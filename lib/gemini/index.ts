@@ -39,8 +39,14 @@ async function runStructured<T>(prompt: string, schema: ZodType<T>): Promise<T> 
     const raw = await callGeminiJSON(prompt);
     try {
       return schema.parse(JSON.parse(stripFences(raw)));
-    } catch {
-      // retry once on parse/validation failure
+    } catch (e) {
+      // Log why we're retrying (the raw is AI output, not user secrets) so a
+      // persistent "formato inesperado" is debuggable instead of a black box.
+      console.warn(
+        `[gemini] parse/validación falló (intento ${attempt + 1}/2): ${
+          e instanceof Error ? e.message : "error desconocido"
+        } · raw: ${stripFences(raw).slice(0, 200)}`,
+      );
     }
   }
   throw new GeminiOutputError("La IA devolvió un formato inesperado.");
