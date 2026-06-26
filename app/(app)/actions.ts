@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { geminiModelName } from "@/lib/gemini";
-import { firstError, notifPrefsSchema, datoSchema } from "@/lib/validation";
+import { firstError, notifPrefsSchema, datoSchema, commentSchema } from "@/lib/validation";
+import { tipoVotoBySlug } from "@/lib/constants";
 import {
   dispatchNuevaPublicacion,
   dispatchComentario,
@@ -78,14 +79,16 @@ export async function addCommentAction(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado." };
-  if (!comentario.trim()) return { error: "El comentario está vacío." };
+
+  const parsed = commentSchema.safeParse({ comentario });
+  if (!parsed.success) return { error: firstError(parsed.error) };
 
   const { data, error } = await supabase
     .from("comments")
     .insert({
       post_id: postId,
       user_id: user.id,
-      comentario: comentario.trim(),
+      comentario: parsed.data.comentario,
     })
     .select("id")
     .single();
@@ -107,6 +110,7 @@ export async function toggleVoteAction(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado." };
+  if (!tipoVotoBySlug(tipo)) return { error: "Tipo de voto inválido." };
 
   const { data: existing } = await supabase
     .from("votes")
@@ -277,11 +281,13 @@ export async function addDatoCommentAction(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "No autenticado." };
-  if (!comentario.trim()) return { error: "El comentario está vacío." };
+
+  const parsed = commentSchema.safeParse({ comentario });
+  if (!parsed.success) return { error: firstError(parsed.error) };
 
   const { error } = await supabase
     .from("datos_comments")
-    .insert({ dato_id: datoId, user_id: user.id, comentario: comentario.trim() });
+    .insert({ dato_id: datoId, user_id: user.id, comentario: parsed.data.comentario });
   if (error) return { error: error.message };
 
   after(() => flushPendingNotifications([user.id])); // rank-up from +3 pts

@@ -169,15 +169,18 @@ export async function flushPendingNotifications(
   if (ids.length === 0) return;
 
   try {
-    const { data: pend } = await admin
+    // Claim atomically: only rows STILL 'pending' flip to 'sending' and are
+    // returned, so two concurrent flushes never grab (and email) the same row.
+    const { data: claimed } = await admin
       .from("notifications")
-      .select("id,recipient_id,tipo,payload")
+      .update({ email_status: "sending" })
       .in("recipient_id", ids)
       .in("tipo", ["rango", "insignia"])
-      .eq("email_status", "pending");
-    if (!pend || pend.length === 0) return;
+      .eq("email_status", "pending")
+      .select("id,recipient_id,tipo,payload");
+    if (!claimed || claimed.length === 0) return;
 
-    const recipientIds = [...new Set(pend.map((p: any) => p.recipient_id))];
+    const recipientIds = [...new Set(claimed.map((p: any) => p.recipient_id))];
     const { data: profs } = await admin
       .from("profiles")
       .select("id,email,unsubscribe_token,notif_email_enabled,notif_rango")
@@ -187,7 +190,7 @@ export async function flushPendingNotifications(
     const items: OutboxItem[] = [];
     const skipped: string[] = [];
 
-    for (const n of pend as any[]) {
+    for (const n of claimed as any[]) {
       const p: any = pmap.get(n.recipient_id);
       if (!p?.email || !p.notif_email_enabled || !p.notif_rango) {
         skipped.push(n.id);
@@ -225,6 +228,14 @@ export async function flushAllPending(): Promise<void> {
   const admin = getAdmin();
   if (!admin) return;
   try {
+    // Re-queue rows stuck in 'sending' (a flush died after claiming them).
+    const stale = new Date(Date.now() - 10 * 60_000).toISOString();
+    await admin
+      .from("notifications")
+      .update({ email_status: "pending" })
+      .eq("email_status", "sending")
+      .lt("created_at", stale);
+
     const { data } = await admin
       .from("notifications")
       .select("recipient_id")
