@@ -66,6 +66,43 @@ export interface NotifPrefs {
   notif_nuevo_dato: boolean;
 }
 
+// ----- Actividad reciente (migration 0009) — feed global de eventos del
+// sidebar. Filas de v_actividad_reciente (evento + actor). -----
+
+export type ActivityTipo =
+  | "publico_enlace"
+  | "publico_dato"
+  | "comento_enlace"
+  | "comento_dato"
+  | "voto_enlace"
+  | "like_dato"
+  | "insignia"
+  | "rango";
+
+/** Snapshot guardado por los triggers para renderizar sin joins extra. */
+export interface ActivityPayload {
+  titulo?: string;
+  extracto?: string;
+  dato_tipo?: string;
+  tipo_voto?: string;
+  tipo_voto_nombre?: string;
+  badge_nombre?: string;
+  rango_anterior?: string;
+  rango_nuevo?: string;
+}
+
+export interface ActivityEvent {
+  id: string;
+  actor_id: string;
+  tipo: ActivityTipo;
+  post_id: string | null;
+  dato_id: string | null;
+  payload: ActivityPayload;
+  created_at: string;
+  actor_nombre: string | null;
+  actor_avatar: string | null;
+}
+
 export interface Post {
   id: string;
   user_id: string;
