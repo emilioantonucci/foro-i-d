@@ -13,9 +13,11 @@ import type { ShellProfile } from "./AppShell";
  */
 export default function ShellLayout({
   profile,
+  banner,
   children,
 }: {
   profile: ShellProfile;
+  banner?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -112,6 +114,7 @@ export default function ShellLayout({
           <Topbar onMenu={() => setOpen(true)} />
         </Suspense>
         <main id="main" className="dg-shell__content">
+          {banner}
           {children}
         </main>
       </div>
