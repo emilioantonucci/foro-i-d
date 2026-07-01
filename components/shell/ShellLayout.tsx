@@ -13,10 +13,12 @@ import type { ShellProfile } from "./AppShell";
  */
 export default function ShellLayout({
   profile,
+  notifUnread = 0,
   banner,
   children,
 }: {
   profile: ShellProfile;
+  notifUnread?: number;
   banner?: React.ReactNode;
   children: React.ReactNode;
 }) {
@@ -111,7 +113,7 @@ export default function ShellLayout({
             />
           }
         >
-          <Topbar onMenu={() => setOpen(true)} />
+          <Topbar onMenu={() => setOpen(true)} unreadInicial={notifUnread} />
         </Suspense>
         <main id="main" className="dg-shell__content">
           {banner}

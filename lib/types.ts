@@ -29,6 +29,8 @@ export interface Profile {
   notif_rango?: boolean;
   notif_nuevo_dato?: boolean;
   unsubscribe_token?: string;
+  // cursor de "visto" de la campanita in-app (migration 0011)
+  notif_seen_at?: string;
 }
 
 // ----- Email notifications (migration 0005) -----
@@ -101,6 +103,12 @@ export interface ActivityEvent {
   created_at: string;
   actor_nombre: string | null;
   actor_avatar: string | null;
+}
+
+/** Fila de v_notificaciones (migration 0011) — la campanita del Topbar.
+ *  es_para_mi: el evento es sobre contenido del usuario que consulta. */
+export interface BellNotification extends ActivityEvent {
+  es_para_mi: boolean;
 }
 
 export interface Post {

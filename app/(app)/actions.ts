@@ -345,6 +345,23 @@ export async function toggleDatoLikeAction(datoId: string): Promise<ActionResult
   return { ok: true };
 }
 
+/** Marks the bell notifications as seen: bumps the caller's notif_seen_at
+ *  cursor (no per-row state). No revalidatePath — the badge is client state. */
+export async function markNotificationsSeenAction(): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado." };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ notif_seen_at: new Date().toISOString() })
+    .eq("id", user.id);
+  if (error) return { error: error.message };
+  return { ok: true };
+}
+
 /** Updates the current user's email-notification preferences (own row only). */
 export async function updateNotifPrefsAction(
   input: Partial<NotifPrefs>,

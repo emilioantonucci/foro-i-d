@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { rankForPoints } from "@/lib/points";
+import { getUnreadCount } from "@/lib/data/notifications-bell";
 import AppShell, { type ShellProfile } from "@/components/shell/AppShell";
 import InactivityWarning from "@/components/shell/InactivityWarning";
 
@@ -32,6 +33,10 @@ export default async function AppLayout({
     .maybeSingle();
 
   const puntos = profileRow?.puntos ?? 0;
+
+  // Count inicial de la campanita, server-side para que el badge no arranque
+  // en 0 y salte al primer poll.
+  const notifUnread = await getUnreadCount(user.id);
 
   // Same idle reference as apply_inactivity_penalty(): the most recent of the
   // last action and the last penalty, so banner and cron stay in sync.
@@ -68,7 +73,7 @@ export default async function AppLayout({
       <a href="#main" className="skip-link">
         Saltar al contenido
       </a>
-      <AppShell profile={profile} banner={banner}>
+      <AppShell profile={profile} notifUnread={notifUnread} banner={banner}>
         {children}
       </AppShell>
     </>
