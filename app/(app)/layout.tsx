@@ -2,6 +2,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { rankForPoints } from "@/lib/points";
 import AppShell, { type ShellProfile } from "@/components/shell/AppShell";
+import InactivityWarning from "@/components/shell/InactivityWarning";
+
+// Warn from day 12 of inactivity; the penalty lands on day 15 (migration 0010).
+const AVISO_DIAS = 12;
+const PENALIZACION_DIAS = 15;
+const DIA_MS = 86_400_000;
 
 export default async function AppLayout({
   children,
@@ -21,11 +27,30 @@ export default async function AppLayout({
   // back to the auth user so the shell still renders.
   const { data: profileRow } = await supabase
     .from("profiles")
-    .select("nombre, email, puntos")
+    .select("nombre, email, puntos, last_activity_at, last_penalty_at")
     .eq("id", user.id)
     .maybeSingle();
 
   const puntos = profileRow?.puntos ?? 0;
+
+  // Same idle reference as apply_inactivity_penalty(): the most recent of the
+  // last action and the last penalty, so banner and cron stay in sync.
+  const idleRef = Math.max(
+    profileRow?.last_activity_at
+      ? new Date(profileRow.last_activity_at).getTime()
+      : Date.now(),
+    profileRow?.last_penalty_at
+      ? new Date(profileRow.last_penalty_at).getTime()
+      : 0,
+  );
+  const diasInactivo = Math.floor((Date.now() - idleRef) / DIA_MS);
+  const banner =
+    puntos > 0 && diasInactivo >= AVISO_DIAS ? (
+      <InactivityWarning
+        diasInactivo={diasInactivo}
+        diasRestantes={Math.max(0, PENALIZACION_DIAS - diasInactivo)}
+      />
+    ) : undefined;
   const profile: ShellProfile = {
     id: user.id,
     nombre:
@@ -43,7 +68,9 @@ export default async function AppLayout({
       <a href="#main" className="skip-link">
         Saltar al contenido
       </a>
-      <AppShell profile={profile}>{children}</AppShell>
+      <AppShell profile={profile} banner={banner}>
+        {children}
+      </AppShell>
     </>
   );
 }

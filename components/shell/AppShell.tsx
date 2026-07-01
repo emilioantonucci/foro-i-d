@@ -10,10 +10,16 @@ export interface ShellProfile {
 
 export default function AppShell({
   profile,
+  banner,
   children,
 }: {
   profile: ShellProfile;
+  banner?: React.ReactNode;
   children: React.ReactNode;
 }) {
-  return <ShellLayout profile={profile}>{children}</ShellLayout>;
+  return (
+    <ShellLayout profile={profile} banner={banner}>
+      {children}
+    </ShellLayout>
+  );
 }
