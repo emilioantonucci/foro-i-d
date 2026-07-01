@@ -17,6 +17,7 @@ const COL_BY_TIPO: Record<string, string> = {
   resumen_semanal: "notif_resumen_semanal",
   rango: "notif_rango",
   insignia: "notif_rango",
+  nuevo_dato: "notif_nuevo_dato",
 };
 
 // Human label per type, for the confirmation copy.
@@ -26,6 +27,7 @@ const LABEL_BY_TIPO: Record<string, string> = {
   resumen_semanal: "el resumen semanal",
   rango: "los avisos de rango e insignias",
   insignia: "los avisos de rango e insignias",
+  nuevo_dato: "los avisos de nuevos datos en Datos random",
 };
 
 function escapeHtml(s: string): string {

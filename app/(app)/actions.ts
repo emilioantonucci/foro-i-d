@@ -9,6 +9,7 @@ import { firstError, notifPrefsSchema, datoSchema, commentSchema } from "@/lib/v
 import { tipoVotoBySlug } from "@/lib/constants";
 import {
   dispatchNuevaPublicacion,
+  dispatchNuevoDato,
   dispatchComentario,
   flushPendingNotifications,
 } from "@/lib/notifications/dispatch";
@@ -266,6 +267,7 @@ export async function createDatoAction(
     return { error: error?.message ?? "No se pudo publicar el dato." };
   }
 
+  after(() => dispatchNuevoDato(data.id, user.id)); // avisar al equipo (como el Radar)
   after(() => flushPendingNotifications([user.id])); // rank-up from +5 pts
 
   revalidatePath("/datos");

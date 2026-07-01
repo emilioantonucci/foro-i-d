@@ -27,6 +27,7 @@ export interface Profile {
   notif_comentario?: boolean;
   notif_resumen_semanal?: boolean;
   notif_rango?: boolean;
+  notif_nuevo_dato?: boolean;
   unsubscribe_token?: string;
 }
 
@@ -37,7 +38,8 @@ export type NotificationTipo =
   | "comentario"
   | "resumen_semanal"
   | "rango"
-  | "insignia";
+  | "insignia"
+  | "nuevo_dato";
 
 export type NotificationEmailStatus = "pending" | "sent" | "skipped" | "failed";
 
@@ -46,6 +48,7 @@ export interface Notification {
   recipient_id: string;
   tipo: NotificationTipo;
   post_id: string | null;
+  dato_id: string | null;
   payload: Record<string, unknown>;
   email_status: NotificationEmailStatus;
   leido: boolean;
@@ -60,6 +63,7 @@ export interface NotifPrefs {
   notif_comentario: boolean;
   notif_resumen_semanal: boolean;
   notif_rango: boolean;
+  notif_nuevo_dato: boolean;
 }
 
 export interface Post {

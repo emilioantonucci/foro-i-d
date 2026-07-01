@@ -17,7 +17,7 @@ export default async function NotifPrefsPage() {
   const { data } = await supabase
     .from("profiles")
     .select(
-      "notif_email_enabled,notif_nueva_publicacion,notif_comentario,notif_resumen_semanal,notif_rango",
+      "notif_email_enabled,notif_nueva_publicacion,notif_comentario,notif_resumen_semanal,notif_rango,notif_nuevo_dato",
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -29,6 +29,7 @@ export default async function NotifPrefsPage() {
     notif_comentario: data?.notif_comentario ?? true,
     notif_resumen_semanal: data?.notif_resumen_semanal ?? true,
     notif_rango: data?.notif_rango ?? true,
+    notif_nuevo_dato: data?.notif_nuevo_dato ?? true,
   };
 
   return (

@@ -106,6 +106,35 @@ export function nuevaPublicacionEmail(args: {
   };
 }
 
+export function nuevoDatoEmail(args: {
+  dato: { id: string; titulo: string; descripcion?: string | null };
+  autorNombre: string;
+  token: string;
+}): EmailContent {
+  const { dato, autorNombre, token } = args;
+  const descripcion = dato.descripcion?.trim()
+    ? `<p style="font-size:14px;line-height:1.6;color:${MUTED};margin:0 0 18px;">${esc(dato.descripcion)}</p>`
+    : "";
+  const bodyHtml = `
+    <p style="font-size:14px;line-height:1.6;color:${MUTED};margin:0 0 14px;">
+      <strong style="color:${INK};">${esc(autorNombre)}</strong> compartió un nuevo dato en Datos random.
+    </p>
+    <p style="font-size:16px;font-weight:700;line-height:1.4;margin:0 0 6px;color:${INK};">${esc(dato.titulo)}</p>
+    ${descripcion}
+    ${button("Ver el dato", appUrl(`/datos/${dato.id}`))}
+  `;
+  return {
+    subject: `🎲 ${autorNombre} compartió un dato: ${dato.titulo}`,
+    html: layout({
+      token,
+      tipo: "nuevo_dato",
+      heading: "Nuevo aporte en Datos random",
+      bodyHtml,
+      motivo: "Recibís este aviso porque alguien del equipo compartió un dato en Datos random.",
+    }),
+  };
+}
+
 export function comentarioEmail(args: {
   post: PostLite;
   comentario: string;
