@@ -130,5 +130,6 @@ export const notifPrefsSchema = z
     notif_comentario: z.boolean(),
     notif_resumen_semanal: z.boolean(),
     notif_rango: z.boolean(),
+    notif_nuevo_dato: z.boolean(),
   })
   .partial();

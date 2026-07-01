@@ -114,6 +114,24 @@ Cargá las mismas variables de entorno en el panel del host
 (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `GEMINI_API_KEY`, opcional `GEMINI_MODEL`)
 y agregá la URL de producción a **Supabase → Authentication → URL Configuration → Redirect URLs**.
 
+### Notificaciones por email (Resend)
+
+Para que las notificaciones funcionen en producción, además cargá:
+
+- `RESEND_API_KEY` — clave de [Resend](https://resend.com/api-keys).
+- `EMAIL_FROM` — remitente verificado, ej. `Radar I+D <radar@doinglobal.com>`.
+  Requiere **verificar el dominio `doinglobal.com` en Resend** (registros SPF/DKIM en DNS).
+  Sin dominio verificado, Resend solo entrega desde `onboarding@resend.dev` y solo a la
+  dirección dueña de la cuenta.
+- `SUPABASE_SERVICE_ROLE_KEY` — service-role (Supabase → Project Settings → API). **Server-only**:
+  saltea RLS para leer destinatarios y escribir en la cola `notifications`. Nunca exponer en el cliente.
+- `NEXT_PUBLIC_APP_URL` — URL pública para los links de los emails (sin barra final), ej. `https://tu-app.vercel.app`.
+- `CRON_SECRET` — string aleatorio largo que protege `/api/cron/weekly-digest`. Vercel Cron lo
+  envía solo como `Authorization: Bearer <CRON_SECRET>` (ver `vercel.json`, lunes 11:00 UTC).
+
+Aplicá todas las migraciones de `supabase/migrations/` al proyecto remoto (`supabase db push` o el
+SQL editor). Si falta `RESEND_API_KEY`, el envío se omite silenciosamente (la app sigue funcionando).
+
 ## Scripts
 
 - `npm run dev` — desarrollo

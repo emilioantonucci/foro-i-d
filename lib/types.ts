@@ -27,6 +27,7 @@ export interface Profile {
   notif_comentario?: boolean;
   notif_resumen_semanal?: boolean;
   notif_rango?: boolean;
+  notif_nuevo_dato?: boolean;
   unsubscribe_token?: string;
 }
 
@@ -37,7 +38,8 @@ export type NotificationTipo =
   | "comentario"
   | "resumen_semanal"
   | "rango"
-  | "insignia";
+  | "insignia"
+  | "nuevo_dato";
 
 export type NotificationEmailStatus = "pending" | "sent" | "skipped" | "failed";
 
@@ -46,6 +48,7 @@ export interface Notification {
   recipient_id: string;
   tipo: NotificationTipo;
   post_id: string | null;
+  dato_id: string | null;
   payload: Record<string, unknown>;
   email_status: NotificationEmailStatus;
   leido: boolean;
@@ -60,6 +63,44 @@ export interface NotifPrefs {
   notif_comentario: boolean;
   notif_resumen_semanal: boolean;
   notif_rango: boolean;
+  notif_nuevo_dato: boolean;
+}
+
+// ----- Actividad reciente (migration 0009) — feed global de eventos del
+// sidebar. Filas de v_actividad_reciente (evento + actor). -----
+
+export type ActivityTipo =
+  | "publico_enlace"
+  | "publico_dato"
+  | "comento_enlace"
+  | "comento_dato"
+  | "voto_enlace"
+  | "like_dato"
+  | "insignia"
+  | "rango";
+
+/** Snapshot guardado por los triggers para renderizar sin joins extra. */
+export interface ActivityPayload {
+  titulo?: string;
+  extracto?: string;
+  dato_tipo?: string;
+  tipo_voto?: string;
+  tipo_voto_nombre?: string;
+  badge_nombre?: string;
+  rango_anterior?: string;
+  rango_nuevo?: string;
+}
+
+export interface ActivityEvent {
+  id: string;
+  actor_id: string;
+  tipo: ActivityTipo;
+  post_id: string | null;
+  dato_id: string | null;
+  payload: ActivityPayload;
+  created_at: string;
+  actor_nombre: string | null;
+  actor_avatar: string | null;
 }
 
 export interface Post {

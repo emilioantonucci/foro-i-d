@@ -144,6 +144,13 @@ export default function NotifPrefsForm({ initial }: { initial: NotifPrefs }) {
         onChange={(v) => update("notif_comentario", v)}
       />
       <Row
+        title="Nuevos datos en Datos random"
+        desc="Cuando alguien del equipo comparte un libro, artículo, video o dato curioso."
+        checked={prefs.notif_nuevo_dato}
+        disabled={off}
+        onChange={(v) => update("notif_nuevo_dato", v)}
+      />
+      <Row
         title="Resumen semanal"
         desc="Un solo correo por semana con lo más destacado del Radar."
         checked={prefs.notif_resumen_semanal}

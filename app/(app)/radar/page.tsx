@@ -10,6 +10,7 @@ import Pagination from "@/components/feed/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
 import Card from "@/components/ui/Card";
 import Avatar from "@/components/ui/Avatar";
+import ActivityRail from "@/components/feed/ActivityRail";
 import { SkelRail } from "@/components/ui/skeletons";
 
 export default async function RadarPage({
@@ -64,9 +65,14 @@ export default async function RadarPage({
       </div>
 
       <div className="dg-two-col__rail">
-        <Suspense fallback={<SkelRail />}>
-          <LeaderRail />
-        </Suspense>
+        <div style={{ position: "sticky", top: "84px", display: "grid", gap: "14px" }}>
+          <Suspense fallback={<SkelRail />}>
+            <LeaderRail />
+          </Suspense>
+          <Suspense fallback={<SkelRail rows={8} />}>
+            <ActivityRail />
+          </Suspense>
+        </div>
       </div>
     </div>
   );
@@ -75,7 +81,7 @@ export default async function RadarPage({
 async function LeaderRail() {
   const leaders = await getLeaderboard();
   return (
-    <Card pad="md" style={{ position: "sticky", top: "84px" }}>
+    <Card pad="md">
       <div className="dg-section-label" style={{ marginBottom: "12px" }}>
         Top contribuyentes
       </div>

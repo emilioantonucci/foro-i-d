@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { emailEnabled, sendBatch, type EmailMessage } from "@/lib/email/client";
 import {
   nuevaPublicacionEmail,
+  nuevoDatoEmail,
   comentarioEmail,
   resumenSemanalEmail,
   rangoEmail,
@@ -92,6 +93,59 @@ export async function dispatchNuevaPublicacion(postId: string, autorId: string):
     await flushOutbox(admin, items);
   } catch (e) {
     console.error("[notif] dispatchNuevaPublicacion falló:", e instanceof Error ? e.message : e);
+  }
+}
+
+/**
+ * INSTANT — a new dato was shared in "Datos random". Notifies every other member
+ * who has the preference on. The author never receives their own dato.
+ */
+export async function dispatchNuevoDato(datoId: string, autorId: string): Promise<void> {
+  const admin = getAdmin();
+  if (!admin) return;
+  try {
+    const [{ data: dato }, { data: autor }] = await Promise.all([
+      admin.from("datos").select("id,titulo,descripcion").eq("id", datoId).maybeSingle(),
+      admin.from("profiles").select("nombre").eq("id", autorId).maybeSingle(),
+    ]);
+    if (!dato) return;
+    const autorNombre = autor?.nombre?.trim() || "Alguien del equipo";
+
+    const { data: recipients } = await admin
+      .from("profiles")
+      .select("id,email,unsubscribe_token")
+      .neq("id", autorId)
+      .eq("notif_email_enabled", true)
+      .eq("notif_nuevo_dato", true)
+      .not("email", "is", null);
+
+    if (!recipients || recipients.length === 0) return;
+
+    const { data: inserted } = await admin
+      .from("notifications")
+      .insert(
+        recipients.map((r: any) => ({
+          recipient_id: r.id,
+          tipo: "nuevo_dato",
+          dato_id: dato.id,
+          payload: { titulo: dato.titulo },
+        })),
+      )
+      .select("id,recipient_id");
+
+    const recMap = new Map(recipients.map((r: any) => [r.id, r]));
+    const items: OutboxItem[] = (inserted ?? [])
+      .map((n: any) => {
+        const r: any = recMap.get(n.recipient_id);
+        if (!r?.email) return null;
+        const { subject, html } = nuevoDatoEmail({ dato, autorNombre, token: r.unsubscribe_token });
+        return { id: n.id, message: { to: r.email, subject, html } };
+      })
+      .filter(Boolean) as OutboxItem[];
+
+    await flushOutbox(admin, items);
+  } catch (e) {
+    console.error("[notif] dispatchNuevoDato falló:", e instanceof Error ? e.message : e);
   }
 }
 
