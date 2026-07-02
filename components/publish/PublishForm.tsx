@@ -6,13 +6,14 @@ import { Sparkles, X, AlertTriangle } from "lucide-react";
 import { CATEGORIAS, PRIORIDADES, APLICACIONES_INTERNAS } from "@/lib/constants";
 import { PUNTOS } from "@/lib/points";
 import { createPostAction } from "@/app/(app)/actions";
-import { PUBLISH_LIMITS } from "@/lib/validation";
-import type { LinkSummary } from "@/lib/types";
+import { PUBLISH_LIMITS, type PollInput } from "@/lib/validation";
+import type { LinkSummary, PollSuggestion } from "@/lib/types";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Field, { Input, Textarea, Select } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
 import SourceInput, { type SourceFile } from "@/components/publish/SourceInput";
+import PollEditor from "@/components/engage/PollEditor";
 
 function isValidUrl(value: string): boolean {
   try {
@@ -39,6 +40,8 @@ export default function PublishForm() {
 
   const [aiRiesgos, setAiRiesgos] = useState<string[]>([]);
   const [aiTags, setAiTags] = useState<string[]>([]);
+  const [encuesta, setEncuesta] = useState<PollInput | null>(null);
+  const [pollSuggestion, setPollSuggestion] = useState<PollSuggestion | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -91,6 +94,7 @@ export default function PublishForm() {
     );
     setAiTags(data.etiquetasSugeridas ?? []);
     setAiRiesgos(data.riesgos ?? []);
+    if (data.encuestaSugerida?.pregunta) setPollSuggestion(data.encuestaSugerida);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -111,6 +115,7 @@ export default function PublishForm() {
       prioridad,
       aplicacion_interna: aplicaciones,
       archivo: file ?? undefined,
+      encuesta: encuesta ?? undefined,
     });
     // On success the action redirects; only errors return here.
     if (result?.error) {
@@ -349,6 +354,14 @@ export default function PublishForm() {
                 })}
               </div>
             </div>
+
+            <PollEditor
+              value={encuesta}
+              onChange={setEncuesta}
+              suggestion={pollSuggestion}
+              titulo={titulo}
+              resumen={resumen}
+            />
           </div>
         </Card>
 

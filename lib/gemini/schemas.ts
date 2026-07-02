@@ -21,6 +21,12 @@ export const LinkSummarySchema = z.object({
   preguntasSugeridas: z.array(z.string()).default([]),
 });
 
+/** Respuesta de /api/ai/engage (encuesta + preguntas on-demand). */
+export const EngagementSchema = z.object({
+  encuesta: PollSuggestionSchema.nullish().default(null),
+  preguntas: z.array(z.string()).default([]),
+});
+
 export const DebateSynthesisSchema = z.object({
   argumentos: z.array(z.string()).default([]),
   consenso: z.string().default(""),

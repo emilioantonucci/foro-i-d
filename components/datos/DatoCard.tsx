@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageSquare, Link2, FileText } from "lucide-react";
+import { MessageSquare, Link2, FileText, BarChart3 } from "lucide-react";
 import type { FeedDato } from "@/lib/data/datos";
 import { datoTipoBySlug } from "@/lib/constants";
 import { timeAgo } from "@/lib/ui";
@@ -40,6 +40,23 @@ export default function DatoCard({ dato }: { dato: FeedDato }) {
             }}
           >
             <FileText size={12} aria-hidden="true" /> Adjunto
+          </span>
+        )}
+        {dato.has_poll && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              background: "rgba(153,204,6,0.12)",
+              borderRadius: "var(--radius-pill)",
+              padding: "3px 10px",
+              fontSize: "11.5px",
+              fontWeight: 600,
+              color: "#6B9000",
+            }}
+          >
+            <BarChart3 size={12} aria-hidden="true" /> Encuesta
           </span>
         )}
         {tipo && <Badge color={tipo.color}>{tipo.nombre}</Badge>}

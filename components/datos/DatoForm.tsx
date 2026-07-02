@@ -5,14 +5,15 @@ import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { DATO_TIPOS } from "@/lib/constants";
 import { createDatoAction } from "@/app/(app)/actions";
-import { DATO_LIMITS } from "@/lib/validation";
+import { DATO_LIMITS, type PollInput } from "@/lib/validation";
 import { PUNTOS } from "@/lib/points";
-import type { LinkSummary } from "@/lib/types";
+import type { LinkSummary, PollSuggestion } from "@/lib/types";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Field, { Input, Textarea, Select } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
 import SourceInput, { type SourceFile, type SourceKind } from "@/components/publish/SourceInput";
+import PollEditor from "@/components/engage/PollEditor";
 
 function isValidUrl(value: string): boolean {
   try {
@@ -33,6 +34,8 @@ export default function DatoForm() {
   const [etiquetas, setEtiquetas] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [file, setFile] = useState<SourceFile | null>(null);
+  const [encuesta, setEncuesta] = useState<PollInput | null>(null);
+  const [pollSuggestion, setPollSuggestion] = useState<PollSuggestion | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -69,6 +72,7 @@ export default function DatoForm() {
       if (source === "youtube") setTipo("video");
       else if (source === "pdf" || source === "docx") setTipo("articulo");
     }
+    if (data.encuestaSugerida?.pregunta) setPollSuggestion(data.encuestaSugerida);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -86,6 +90,7 @@ export default function DatoForm() {
       descripcion,
       etiquetas,
       archivo: file ?? undefined,
+      encuesta: encuesta ?? undefined,
     });
     // On success the action redirects; only errors return here.
     if (result?.error) {
@@ -238,6 +243,14 @@ export default function DatoForm() {
               placeholder="Escribí una etiqueta y presioná Enter…"
             />
           </div>
+
+          <PollEditor
+            value={encuesta}
+            onChange={setEncuesta}
+            suggestion={pollSuggestion}
+            titulo={titulo}
+            resumen={descripcion}
+          />
         </div>
       </Card>
     </form>

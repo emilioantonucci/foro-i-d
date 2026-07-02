@@ -11,7 +11,9 @@ import {
   datoSchema,
   commentSchema,
   attachmentSchema,
+  pollSchema,
   type AttachmentInput,
+  type PollInput,
 } from "@/lib/validation";
 import { tipoVotoBySlug } from "@/lib/constants";
 import {
@@ -33,11 +35,35 @@ export interface CreatePostInput {
   aplicacion_interna?: string[];
   /** Adjunto YA subido a Storage por el navegador (solo la referencia). */
   archivo?: AttachmentInput;
+  /** Encuesta opcional (2 a 4 opciones, estilo Instagram). */
+  encuesta?: PollInput;
 }
 
 export interface ActionResult {
   ok?: boolean;
   error?: string;
+}
+
+/** Crea la encuesta de una publicación recién insertada (best effort: la
+ *  encuesta es opcional, un fallo acá no revierte la publicación). */
+async function createPollFor(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  parent: { postId?: string; datoId?: string },
+  encuesta: PollInput | undefined,
+): Promise<void> {
+  if (!encuesta) return;
+  const parsed = pollSchema.safeParse(encuesta);
+  if (!parsed.success) {
+    console.warn(`[polls] encuesta inválida, se omite: ${firstError(parsed.error)}`);
+    return;
+  }
+  const { error } = await supabase.rpc("create_poll_with_options", {
+    p_post: parent.postId ?? null,
+    p_dato: parent.datoId ?? null,
+    p_pregunta: parsed.data.pregunta,
+    p_opciones: parsed.data.opciones,
+  });
+  if (error) console.error(`[polls] no se pudo crear la encuesta: ${error.message}`);
 }
 
 /** Valida la referencia del adjunto y que apunte a la carpeta del caller
@@ -99,6 +125,8 @@ export async function createPostAction(
   if (error || !data) {
     return { error: error?.message ?? "No se pudo crear la publicación." };
   }
+
+  await createPollFor(supabase, { postId: data.id }, input.encuesta);
 
   // Email notifications run AFTER the response (Next `after`): they never delay
   // the redirect and a mail failure can't break publishing.
@@ -173,6 +201,54 @@ export async function toggleVoteAction(
 
   revalidatePath(`/post/${postId}`);
   revalidatePath("/radar");
+  return { ok: true };
+}
+
+/** Vota (o cambia el voto) en una encuesta. Un voto por usuario: upsert
+ *  sobre la PK (poll_id, user_id). Los puntos/actividad los manejan los
+ *  triggers de la migración 0013 (solo INSERT/DELETE; el cambio es neutro). */
+export async function votePollAction(
+  pollId: string,
+  optionId: string,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado." };
+
+  // La opción debe pertenecer a la encuesta (evita cruzar encuestas).
+  const { data: option } = await supabase
+    .from("poll_options")
+    .select("id, poll_id, poll:polls(post_id, dato_id)")
+    .eq("id", optionId)
+    .eq("poll_id", pollId)
+    .maybeSingle();
+  if (!option) return { error: "Opción de encuesta inválida." };
+
+  const { error } = await supabase
+    .from("poll_votes")
+    .upsert(
+      { poll_id: pollId, option_id: optionId, user_id: user.id },
+      { onConflict: "poll_id,user_id" },
+    );
+  if (error) return { error: error.message };
+
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const poll = (Array.isArray(option.poll) ? option.poll[0] : option.poll) as any;
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+  if (poll?.post_id) {
+    // +2 al autor de la publicación -> puede subir de rango.
+    const { data: post } = await supabase.from("posts").select("user_id").eq("id", poll.post_id).maybeSingle();
+    if (post?.user_id) after(() => flushPendingNotifications([post.user_id]));
+    revalidatePath(`/post/${poll.post_id}`);
+    revalidatePath("/radar");
+  } else if (poll?.dato_id) {
+    const { data: dato } = await supabase.from("datos").select("user_id").eq("id", poll.dato_id).maybeSingle();
+    if (dato?.user_id) after(() => flushPendingNotifications([dato.user_id]));
+    revalidatePath(`/datos/${poll.dato_id}`);
+    revalidatePath("/datos");
+  }
   return { ok: true };
 }
 
@@ -271,6 +347,8 @@ export interface CreateDatoInput {
   etiquetas?: string[];
   /** Adjunto YA subido a Storage por el navegador (solo la referencia). */
   archivo?: AttachmentInput;
+  /** Encuesta opcional (2 a 4 opciones, estilo Instagram). */
+  encuesta?: PollInput;
 }
 
 export async function createDatoAction(
@@ -310,6 +388,8 @@ export async function createDatoAction(
   if (error || !data) {
     return { error: error?.message ?? "No se pudo publicar el dato." };
   }
+
+  await createPollFor(supabase, { datoId: data.id }, input.encuesta);
 
   after(() => dispatchNuevoDato(data.id, user.id)); // avisar al equipo (como el Radar)
   after(() => flushPendingNotifications([user.id])); // rank-up from +5 pts

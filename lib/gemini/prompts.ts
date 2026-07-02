@@ -60,6 +60,25 @@ Devolvé un JSON con esta forma exacta:
 ${JSON_ONLY}`;
 }
 
+/** Genera encuesta + preguntas disparadoras a partir de los campos ya
+ *  cargados del formulario (para cuando el usuario no usó "Analizar con IA"
+ *  o quiere regenerar las sugerencias). */
+export function engagePrompt(input: { titulo: string; resumen?: string }): string {
+  return `${ROLE}
+${GUARD}
+A partir de la siguiente publicación interna, generá material para fomentar la interacción del equipo.
+Título (dato del usuario):
+${block(input.titulo)}
+${input.resumen ? `Resumen / descripción (dato del usuario):\n${block(input.resumen.slice(0, 2000))}` : ""}
+
+Devolvé un JSON con esta forma exacta:
+{
+  "encuesta": { "pregunta": "una encuesta breve estilo red social sobre el recurso (máx 100 caracteres)", "opciones": ["2 a 4 opciones cortas, máx 40 caracteres cada una"] },
+  "preguntas": ["hasta 2 preguntas abiertas que disparen debate en el equipo sobre el recurso"]
+}
+${JSON_ONLY}`;
+}
+
 export function synthesisPrompt(input: {
   titulo: string;
   resumen?: string | null;
