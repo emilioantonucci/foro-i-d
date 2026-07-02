@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getPost } from "@/lib/data/posts";
 import { getPoll } from "@/lib/data/polls";
 import PollWidget from "@/components/polls/PollWidget";
+import TriggerQuestions from "@/components/engage/TriggerQuestions";
 import VoteButtons from "@/components/post/VoteButtons";
 import CommentThread from "@/components/post/CommentThread";
 import GovernanceControls from "@/components/post/GovernanceControls";
@@ -177,6 +178,8 @@ export default async function PostPage({
                 ))}
               </div>
             )}
+
+            <TriggerQuestions preguntas={post.preguntas ?? []} />
 
             {poll && <PollWidget poll={poll} />}
 

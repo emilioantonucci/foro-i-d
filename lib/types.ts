@@ -133,6 +133,8 @@ export interface Post {
   file_name?: string | null;
   file_mime?: string | null;
   file_size?: number | null;
+  // preguntas disparadoras (migration 0014, máx 2)
+  preguntas?: string[];
 }
 
 export interface Comment {
@@ -179,6 +181,8 @@ export interface Dato {
   file_name?: string | null;
   file_mime?: string | null;
   file_size?: number | null;
+  // preguntas disparadoras (migration 0014, máx 2)
+  preguntas?: string[];
 }
 
 export interface DatoComment {

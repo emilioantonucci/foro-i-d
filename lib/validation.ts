@@ -162,6 +162,19 @@ export const pollSchema = z.object({
 
 export type PollInput = z.infer<typeof pollSchema>;
 
+// ---- preguntas disparadoras — migration 0014 ------------------------------
+export const PREGUNTAS_LIMITS = { max: 2, largo: 200 } as const;
+
+export const preguntasSchema = z
+  .array(
+    z
+      .string()
+      .trim()
+      .min(5, "Hay una pregunta demasiado corta.")
+      .max(PREGUNTAS_LIMITS.largo, `Cada pregunta admite hasta ${PREGUNTAS_LIMITS.largo} caracteres.`),
+  )
+  .max(PREGUNTAS_LIMITS.max, `Se permiten hasta ${PREGUNTAS_LIMITS.max} preguntas disparadoras.`);
+
 export const COMMENT_MAX = 1000;
 export const commentSchema = z.object({
   comentario: z

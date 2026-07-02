@@ -14,6 +14,7 @@ import Field, { Input, Textarea, Select } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
 import SourceInput, { type SourceFile, type SourceKind } from "@/components/publish/SourceInput";
 import PollEditor from "@/components/engage/PollEditor";
+import QuestionsEditor from "@/components/engage/QuestionsEditor";
 
 function isValidUrl(value: string): boolean {
   try {
@@ -36,6 +37,8 @@ export default function DatoForm() {
   const [file, setFile] = useState<SourceFile | null>(null);
   const [encuesta, setEncuesta] = useState<PollInput | null>(null);
   const [pollSuggestion, setPollSuggestion] = useState<PollSuggestion | null>(null);
+  const [preguntas, setPreguntas] = useState<string[]>([]);
+  const [questionSuggestions, setQuestionSuggestions] = useState<string[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -73,6 +76,7 @@ export default function DatoForm() {
       else if (source === "pdf" || source === "docx") setTipo("articulo");
     }
     if (data.encuestaSugerida?.pregunta) setPollSuggestion(data.encuestaSugerida);
+    if (data.preguntasSugeridas?.length) setQuestionSuggestions(data.preguntasSugeridas);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -91,6 +95,7 @@ export default function DatoForm() {
       etiquetas,
       archivo: file ?? undefined,
       encuesta: encuesta ?? undefined,
+      preguntas,
     });
     // On success the action redirects; only errors return here.
     if (result?.error) {
@@ -248,6 +253,14 @@ export default function DatoForm() {
             value={encuesta}
             onChange={setEncuesta}
             suggestion={pollSuggestion}
+            titulo={titulo}
+            resumen={descripcion}
+          />
+
+          <QuestionsEditor
+            value={preguntas}
+            onChange={setPreguntas}
+            suggestions={questionSuggestions}
             titulo={titulo}
             resumen={descripcion}
           />

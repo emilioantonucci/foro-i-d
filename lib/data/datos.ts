@@ -167,6 +167,7 @@ export async function getDato(id: string): Promise<DatoDetail | null> {
     file_name: data.file_name ?? null,
     file_mime: data.file_mime ?? null,
     file_size: data.file_size ?? null,
+    preguntas: data.preguntas ?? [],
     autor: Array.isArray(data.autor) ? (data.autor[0] ?? null) : (data.autor ?? null),
     likes_count: likes.length,
     comentarios_count: comentarios.length,

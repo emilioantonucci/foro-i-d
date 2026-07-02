@@ -14,6 +14,7 @@ import Field, { Input, Textarea, Select } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
 import SourceInput, { type SourceFile } from "@/components/publish/SourceInput";
 import PollEditor from "@/components/engage/PollEditor";
+import QuestionsEditor from "@/components/engage/QuestionsEditor";
 
 function isValidUrl(value: string): boolean {
   try {
@@ -42,6 +43,8 @@ export default function PublishForm() {
   const [aiTags, setAiTags] = useState<string[]>([]);
   const [encuesta, setEncuesta] = useState<PollInput | null>(null);
   const [pollSuggestion, setPollSuggestion] = useState<PollSuggestion | null>(null);
+  const [preguntas, setPreguntas] = useState<string[]>([]);
+  const [questionSuggestions, setQuestionSuggestions] = useState<string[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -95,6 +98,7 @@ export default function PublishForm() {
     setAiTags(data.etiquetasSugeridas ?? []);
     setAiRiesgos(data.riesgos ?? []);
     if (data.encuestaSugerida?.pregunta) setPollSuggestion(data.encuestaSugerida);
+    if (data.preguntasSugeridas?.length) setQuestionSuggestions(data.preguntasSugeridas);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -116,6 +120,7 @@ export default function PublishForm() {
       aplicacion_interna: aplicaciones,
       archivo: file ?? undefined,
       encuesta: encuesta ?? undefined,
+      preguntas,
     });
     // On success the action redirects; only errors return here.
     if (result?.error) {
@@ -359,6 +364,14 @@ export default function PublishForm() {
               value={encuesta}
               onChange={setEncuesta}
               suggestion={pollSuggestion}
+              titulo={titulo}
+              resumen={resumen}
+            />
+
+            <QuestionsEditor
+              value={preguntas}
+              onChange={setPreguntas}
+              suggestions={questionSuggestions}
               titulo={titulo}
               resumen={resumen}
             />
