@@ -2,30 +2,48 @@
 
 import { useState } from "react";
 import { Sparkles, Copy, Check, Printer, MessageCircle } from "lucide-react";
-import type { WeeklyDigest as WeeklyDigestData } from "@/lib/types";
+import type { WeeklyDigest as DigestData } from "@/lib/types";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
+
+type Periodo = "diario" | "semanal";
 
 interface DigestResponse {
   ok: boolean;
   error?: string;
   cached?: boolean;
-  digest?: WeeklyDigestData;
+  digest?: DigestData;
   desde?: string;
   hasta?: string;
   postsCount?: number;
 }
 
-const fmt = (iso?: string) =>
-  iso ? new Date(`${iso}T00:00:00`).toLocaleDateString("es-AR") : "";
+// El semanal guarda fechas YYYY-MM-DD; el diario ya viene formateado con hora.
+const fmt = (v?: string) =>
+  v && /^\d{4}-\d{2}-\d{2}$/.test(v)
+    ? new Date(`${v}T00:00:00`).toLocaleDateString("es-AR")
+    : (v ?? "");
 
 /**
- * Botón "Resumen semanal IA" de la Biblioteca: genera (o trae de caché) la
- * crónica de los últimos 7 días y la muestra en un modal con acciones de
- * copiar, guardar en PDF (imprimir) y compartir por WhatsApp.
+ * Botón + modal del resumen IA del foro. `periodo` elige la crónica: "semanal"
+ * (Biblioteca, últimos 7 días del Radar) o "diario" (sidebar, últimas 24 h de
+ * Radar + Datos random). Acciones: copiar, guardar PDF (print) y WhatsApp.
  */
-export default function WeeklyDigest() {
+export default function DigestButton({
+  periodo,
+  label,
+  shareHref,
+  block,
+  size = "md",
+}: {
+  periodo: Periodo;
+  label: string;
+  /** Path propio que acompaña el texto compartido por WhatsApp. */
+  shareHref: string;
+  block?: boolean;
+  size?: "sm" | "md";
+}) {
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -36,10 +54,14 @@ export default function WeeklyDigest() {
   async function generate() {
     setLoading(true);
     try {
-      const r = await fetch("/api/ai/digest", { method: "POST" });
+      const r = await fetch("/api/ai/digest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ periodo }),
+      });
       const j: DigestResponse = await r.json();
       if (r.status === 400) {
-        setEmptyMsg(j.error ?? "No hubo publicaciones en los últimos 7 días.");
+        setEmptyMsg(j.error ?? "No hubo actividad en el período.");
         setData(null);
         setOpen(true);
         return;
@@ -87,20 +109,26 @@ export default function WeeklyDigest() {
     // límite práctico de la URL deja afuera la narrativa completa.
     const corto =
       data.digest.resumenCorto.trim() || data.digest.narrativa.slice(0, 500);
-    const texto = `${corto}\n\n${window.location.origin}/biblioteca`;
+    const texto = `${corto}\n\n${window.location.origin}${shareHref}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
   }
 
   return (
     <>
-      <Button icon={<Sparkles size={16} aria-hidden="true" />} loading={loading} onClick={generate}>
-        Resumen semanal IA
+      <Button
+        icon={<Sparkles size={16} aria-hidden="true" />}
+        loading={loading}
+        onClick={generate}
+        block={block}
+        size={size}
+      >
+        {label}
       </Button>
 
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title={data?.digest?.titulo ?? "Resumen semanal"}
+        title={data?.digest?.titulo ?? (periodo === "diario" ? "Resumen del día" : "Resumen semanal")}
         width={680}
         footer={
           data?.digest ? (
@@ -135,8 +163,8 @@ export default function WeeklyDigest() {
       >
         {emptyMsg ? (
           <p style={{ margin: 0, fontSize: "14px", color: "var(--fg-secondary)", lineHeight: 1.6 }}>
-            Semana tranquila: {emptyMsg} Cuando el equipo vuelva a publicar, este resumen se arma
-            solo.
+            {periodo === "diario" ? "Día tranquilo" : "Semana tranquila"}: {emptyMsg} Cuando el
+            equipo vuelva a publicar, este resumen se arma solo.
           </p>
         ) : data?.digest ? (
           <div className="dg-print-area">
@@ -165,7 +193,8 @@ export default function WeeklyDigest() {
                 <Sparkles size={12} aria-hidden="true" /> Generado con IA
               </span>
               <span style={{ fontSize: "12px", color: "var(--fg-muted)" }}>
-                {fmt(data.desde)} – {fmt(data.hasta)} · {data.postsCount ?? 0} publicaciones
+                {fmt(data.desde)} – {fmt(data.hasta)} · {data.postsCount ?? 0} aporte
+                {(data.postsCount ?? 0) === 1 ? "" : "s"}
                 {data.cached ? " · generado hoy (caché)" : ""}
               </span>
             </div>

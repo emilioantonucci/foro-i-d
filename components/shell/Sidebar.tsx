@@ -8,6 +8,7 @@ import { Radar, Shuffle, Library, Trophy, BarChart3, LogOut, X } from "lucide-re
 import type { ShellProfile } from "./AppShell";
 import Avatar from "@/components/ui/Avatar";
 import IconButton from "@/components/ui/IconButton";
+import DigestButton from "@/components/digest/DigestButton";
 
 interface NavItem {
   href: string;
@@ -111,6 +112,10 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(function Sidebar(
         {PRIMARY.map((item) => (
           <NavLink key={item.href} item={item} active={isActive(item.href)} />
         ))}
+
+        <div style={{ padding: "10px 4px 4px" }}>
+          <DigestButton periodo="diario" label="Resumen del día" shareHref="/radar" block size="sm" />
+        </div>
 
         <div
           style={{

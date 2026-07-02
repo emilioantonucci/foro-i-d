@@ -20,9 +20,11 @@ import {
   engagePrompt,
   synthesisPrompt,
   weeklyDigestPrompt,
+  dailyDigestPrompt,
   classifyMaterialsPrompt,
   briefPrompt,
   type DigestPostInput,
+  type DigestDatoInput,
 } from "./prompts";
 import type {
   LinkSummary,
@@ -125,6 +127,18 @@ export function generateWeeklyDigest(input: {
   // 1200 palabras ≈ 2500-3000 tokens: el tope default (2048) cortaría el JSON
   // a mitad de string y rompería el parse.
   return runStructured(weeklyDigestPrompt(input), WeeklyDigestSchema, {
+    maxOutputTokens: 4096,
+    timeoutMs: 60_000,
+  });
+}
+
+export function generateDailyDigest(input: {
+  posts: DigestPostInput[];
+  datos: DigestDatoInput[];
+  desde: string;
+  hasta: string;
+}): Promise<WeeklyDigest> {
+  return runStructured(dailyDigestPrompt(input), WeeklyDigestSchema, {
     maxOutputTokens: 4096,
     timeoutMs: 60_000,
   });

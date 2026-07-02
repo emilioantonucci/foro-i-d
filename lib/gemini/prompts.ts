@@ -174,6 +174,67 @@ Devolvé un JSON con esta forma exacta:
 ${JSON_ONLY}`;
 }
 
+export interface DigestDatoInput {
+  autor: string;
+  titulo: string;
+  tipo?: string | null;
+  descripcion?: string | null;
+  likes: number;
+  comentarios_count: number;
+  comentarios: { autor: string; texto: string }[];
+}
+
+/** Crónica diaria del foro completo (Radar + Datos random, últimas 24 h). */
+export function dailyDigestPrompt(input: {
+  posts: DigestPostInput[];
+  datos: DigestDatoInput[];
+  desde: string;
+  hasta: string;
+}): string {
+  const postsBloque = input.posts
+    .map((p, i) => {
+      const linea = `(${i + 1}) [${p.categoria ?? "sin categoría"}] ${p.autor}: ${p.titulo}${
+        p.resumen ? ` — ${p.resumen}` : ""
+      } (${p.votos} votos, ${p.comentarios_count} comentarios)`;
+      const debate = p.comentarios.map((c) => `    - ${c.autor}: ${c.texto}`).join("\n");
+      return debate ? `${linea}\n  Comentarios:\n${debate}` : linea;
+    })
+    .join("\n");
+  const datosBloque = input.datos
+    .map((d, i) => {
+      const linea = `(${i + 1}) [${d.tipo ?? "otro"}] ${d.autor}: ${d.titulo}${
+        d.descripcion ? ` — ${d.descripcion}` : ""
+      } (${d.likes} likes, ${d.comentarios_count} comentarios)`;
+      const debate = d.comentarios.map((c) => `    - ${c.autor}: ${c.texto}`).join("\n");
+      return debate ? `${linea}\n  Comentarios:\n${debate}` : linea;
+    })
+    .join("\n");
+
+  return `${ROLE}
+${GUARD}
+Redactá el resumen del día del foro interno de I+D, cubriendo las últimas 24 horas (${input.desde} a ${input.hasta}). Es una crónica breve para el equipo: contá quién compartió qué, de qué trata cada aporte y qué debates o reacciones hubo. Distinguí las señales estratégicas del Radar de los aportes distendidos de "Datos random". Basate ÚNICAMENTE en lo listado; no inventes datos, personas ni debates.
+
+Señales del Radar (${input.posts.length}) (datos del usuario):
+${block(postsBloque || "(sin publicaciones)")}
+
+Datos random — aportes distendidos (${input.datos.length}) (datos del usuario):
+${block(datosBloque || "(sin datos)")}
+
+Instrucciones de redacción:
+- "narrativa": 2 a 4 párrafos separados por saltos de línea dobles (\\n\\n). Nombrá a los autores ("María compartió…", "hubo debate entre X e Y sobre…"). Si hubo datos random, cerrá con un párrafo liviano sobre ellos. MÁXIMO ESTRICTO: 700 palabras.
+- "destacados": 2 a 4 hitos del día, una frase cada uno.
+- "resumenCorto": versión condensada para compartir por WhatsApp, máximo 600 caracteres, con 2 a 4 emojis sobrios.
+
+Devolvé un JSON con esta forma exacta:
+{
+  "titulo": "título breve del resumen del día",
+  "narrativa": "la crónica en párrafos",
+  "destacados": ["2 a 4 hitos"],
+  "resumenCorto": "versión de máximo 600 caracteres"
+}
+${JSON_ONLY}`;
+}
+
 /** Clasificación en lote del tipo de material (backfill de la Biblioteca):
  *  una sola llamada clasifica hasta ~20 posts para cuidar la cuota free tier. */
 export function classifyMaterialsPrompt(input: {
