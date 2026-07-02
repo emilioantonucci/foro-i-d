@@ -5,7 +5,7 @@ import BibliotecaControls, {
   type BibliotecaParams,
 } from "@/components/biblioteca/BibliotecaControls";
 import BibliotecaTable from "@/components/biblioteca/BibliotecaTable";
-import WeeklyDigest from "@/components/biblioteca/WeeklyDigest";
+import DigestButton from "@/components/digest/DigestButton";
 import BackfillButton from "@/components/biblioteca/BackfillButton";
 import Pagination from "@/components/feed/Pagination";
 import EmptyState from "@/components/ui/EmptyState";
@@ -79,7 +79,7 @@ export default async function BibliotecaPage({
         <h1 className="dg-page-title" style={{ margin: 0 }}>
           Biblioteca de links
         </h1>
-        <WeeklyDigest />
+        <DigestButton periodo="semanal" label="Resumen semanal IA" shareHref="/biblioteca" />
       </div>
       <p className="dg-page-sub">
         {total} publicaci{total === 1 ? "ón" : "ones"} del Radar en una lista compacta y
