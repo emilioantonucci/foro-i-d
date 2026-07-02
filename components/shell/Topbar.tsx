@@ -4,8 +4,15 @@ import { useSearchParams } from "next/navigation";
 import { Search, Plus, X, Menu } from "lucide-react";
 import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
+import NotificationBell from "./NotificationBell";
 
-export default function Topbar({ onMenu }: { onMenu?: () => void }) {
+export default function Topbar({
+  onMenu,
+  unreadInicial = 0,
+}: {
+  onMenu?: () => void;
+  unreadInicial?: number;
+}) {
   const sp = useSearchParams();
   const q = sp.get("q") ?? "";
 
@@ -65,7 +72,8 @@ export default function Topbar({ onMenu }: { onMenu?: () => void }) {
         )}
       </form>
 
-      <div style={{ marginLeft: "auto" }}>
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
+        <NotificationBell unreadInicial={unreadInicial} />
         <Button
           href="/publicar"
           size="sm"

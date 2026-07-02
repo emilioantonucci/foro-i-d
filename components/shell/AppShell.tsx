@@ -10,15 +10,19 @@ export interface ShellProfile {
 
 export default function AppShell({
   profile,
+  notifUnread = 0,
   banner,
   children,
 }: {
   profile: ShellProfile;
+  /** Count SSR de notificaciones no vistas para la campanita (dato volátil,
+   *  por eso no vive en ShellProfile). */
+  notifUnread?: number;
   banner?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <ShellLayout profile={profile} banner={banner}>
+    <ShellLayout profile={profile} notifUnread={notifUnread} banner={banner}>
       {children}
     </ShellLayout>
   );
