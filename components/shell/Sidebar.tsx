@@ -4,7 +4,7 @@ import { forwardRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Radar, Shuffle, Grid2x2, Trophy, BarChart3, LogOut, X } from "lucide-react";
+import { Radar, Shuffle, Library, Trophy, BarChart3, LogOut, X } from "lucide-react";
 import type { ShellProfile } from "./AppShell";
 import Avatar from "@/components/ui/Avatar";
 import IconButton from "@/components/ui/IconButton";
@@ -21,7 +21,7 @@ const PRIMARY: NavItem[] = [
 ];
 
 const CONOCIMIENTO: NavItem[] = [
-  { href: "/tendencias", label: "Mapa de tendencias", Icon: Grid2x2 },
+  { href: "/biblioteca", label: "Biblioteca de links", Icon: Library },
   { href: "/ranking", label: "Ranking", Icon: Trophy },
   { href: "/panel", label: "Panel ejecutivo", Icon: BarChart3 },
 ];

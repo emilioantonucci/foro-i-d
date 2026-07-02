@@ -94,6 +94,28 @@ export const DATO_TIPOS: DatoTipoMeta[] = [
   { slug: "otro", nombre: "Otro", color: "#8A8A90" },
 ];
 
+// Biblioteca de links — tipo de material del recurso publicado.
+// Keep in sync con chk_posts_tipo_material (migration 0015).
+export interface TipoMaterialMeta {
+  slug: string;
+  nombre: string;
+  color: string; // badge tint
+}
+
+export const TIPOS_MATERIAL: TipoMaterialMeta[] = [
+  { slug: "paper", nombre: "Paper", color: "#8A4FBF" },
+  { slug: "informe", nombre: "Informe", color: "#30587D" },
+  { slug: "estadistica", nombre: "Estadística", color: "#1F9E8F" },
+  { slug: "noticia", nombre: "Noticia", color: "#FF8A1A" },
+  { slug: "articulo", nombre: "Artículo", color: "#6B9000" },
+  { slug: "video", nombre: "Video", color: "#C62A2F" },
+  { slug: "podcast", nombre: "Podcast", color: "#B0468C" },
+  { slug: "herramienta", nombre: "Herramienta", color: "#38761D" },
+  { slug: "curso", nombre: "Curso", color: "#FFBA1A" },
+  { slug: "libro", nombre: "Libro", color: "#7A5C3E" },
+  { slug: "otro", nombre: "Otro", color: "#8A8A90" },
+];
+
 // Suggested "posible aplicación interna" options (multi-select in the create form).
 export const APLICACIONES_INTERNAS: string[] = [
   "Nuevo certificado / programa",
@@ -116,3 +138,7 @@ export const datoTipoBySlug = (slug?: string | null) =>
   DATO_TIPOS.find((t) => t.slug === slug);
 export const nombreDatoTipo = (slug?: string | null) =>
   DATO_TIPOS.find((t) => t.slug === slug)?.nombre ?? slug ?? "";
+export const tipoMaterialBySlug = (slug?: string | null) =>
+  TIPOS_MATERIAL.find((t) => t.slug === slug);
+export const nombreTipoMaterial = (slug?: string | null) =>
+  TIPOS_MATERIAL.find((t) => t.slug === slug)?.nombre ?? slug ?? "";

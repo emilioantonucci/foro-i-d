@@ -15,7 +15,7 @@ import FileAttachment from "@/components/publish/FileAttachment";
 import { Semaphore, StatusBadge, CategoryPill, Hashtags } from "@/components/ui/tags";
 import Card from "@/components/ui/Card";
 import Avatar from "@/components/ui/Avatar";
-import { ESTADOS } from "@/lib/constants";
+import { ESTADOS, tipoMaterialBySlug } from "@/lib/constants";
 import { timeAgo } from "@/lib/ui";
 
 export default async function PostPage({
@@ -47,6 +47,10 @@ export default async function PostPage({
 
   const autorNombre = post.autor?.nombre ?? "Colaborador";
   const currentOrden = ESTADOS.find((e) => e.slug === post.estado)?.orden ?? 1;
+  const tipoMaterial = tipoMaterialBySlug(post.tipo_material);
+  const fechaOriginal = post.fecha_original
+    ? new Date(`${post.fecha_original}T00:00:00`).toLocaleDateString("es-AR")
+    : null;
 
   // El bucket `recursos` es privado: la descarga usa una signed URL efímera.
   let fileUrl: string | null = null;
@@ -90,9 +94,30 @@ export default async function PostPage({
               <Semaphore prioridad={post.prioridad} />
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "12px" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", alignItems: "center", marginBottom: "12px" }}>
               <CategoryPill categoria={post.categoria} />
               <StatusBadge estado={post.estado} />
+              {tipoMaterial && (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    borderRadius: "var(--radius-pill)",
+                    padding: "3px 10px",
+                    fontSize: "11.5px",
+                    fontWeight: 700,
+                    color: tipoMaterial.color,
+                    background: `${tipoMaterial.color}1A`,
+                  }}
+                >
+                  {tipoMaterial.nombre}
+                </span>
+              )}
+              {fechaOriginal && (
+                <span style={{ fontSize: "12px", color: "var(--fg-muted)" }}>
+                  Publicado originalmente: {fechaOriginal}
+                </span>
+              )}
             </div>
 
             <h1

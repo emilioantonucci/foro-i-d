@@ -16,7 +16,7 @@ import {
   type AttachmentInput,
   type PollInput,
 } from "@/lib/validation";
-import { tipoVotoBySlug } from "@/lib/constants";
+import { tipoVotoBySlug, tipoMaterialBySlug } from "@/lib/constants";
 import {
   dispatchNuevaPublicacion,
   dispatchNuevoDato,
@@ -40,6 +40,10 @@ export interface CreatePostInput {
   encuesta?: PollInput;
   /** Preguntas disparadoras opcionales (máx 2). */
   preguntas?: string[];
+  /** Fecha de publicación del recurso original (YYYY-MM-DD, no futura). */
+  fecha_original?: string;
+  /** Tipo de material (slug de TIPOS_MATERIAL). */
+  tipo_material?: string;
 }
 
 export interface ActionResult {
@@ -113,6 +117,17 @@ export async function createPostAction(
   );
   if (!preguntas.success) return { error: firstError(preguntas.error) };
 
+  // Biblioteca: fecha original (YYYY-MM-DD, no futura) y tipo de material.
+  // Valores inválidos se descartan en silencio: son metadatos opcionales.
+  const hoy = new Date().toISOString().slice(0, 10);
+  const fechaOriginal =
+    input.fecha_original &&
+    /^\d{4}-\d{2}-\d{2}$/.test(input.fecha_original) &&
+    input.fecha_original <= hoy
+      ? input.fecha_original
+      : null;
+  const tipoMaterial = tipoMaterialBySlug(input.tipo_material)?.slug ?? null;
+
   const { data, error } = await supabase
     .from("posts")
     .insert({
@@ -126,6 +141,8 @@ export async function createPostAction(
       prioridad: input.prioridad || "media",
       aplicacion_interna: input.aplicacion_interna ?? [],
       preguntas: preguntas.data,
+      fecha_original: fechaOriginal,
+      tipo_material: tipoMaterial,
       ...adj.cols,
     })
     .select("id")

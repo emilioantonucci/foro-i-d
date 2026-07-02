@@ -135,6 +135,9 @@ export interface Post {
   file_size?: number | null;
   // preguntas disparadoras (migration 0014, máx 2)
   preguntas?: string[];
+  // Biblioteca de links (migration 0015) — opcionales en filas viejas
+  fecha_original?: string | null;
+  tipo_material?: string | null;
 }
 
 export interface Comment {
@@ -194,7 +197,12 @@ export interface DatoComment {
   updated_at: string;
 }
 
-export type AiOutputTipo = "resumen" | "sintesis" | "oportunidad" | "brief";
+export type AiOutputTipo =
+  | "resumen"
+  | "sintesis"
+  | "oportunidad"
+  | "brief"
+  | "digest";
 
 export interface AiOutput {
   id: string;
@@ -239,6 +247,16 @@ export interface LinkSummary {
   categoriaSugerida: string;
   encuestaSugerida?: PollSuggestion | null;
   preguntasSugeridas?: string[];
+  fechaOriginal?: string | null;
+  tipoMaterial?: string;
+}
+
+/** Resumen semanal IA de la Biblioteca (/api/ai/digest). */
+export interface WeeklyDigest {
+  titulo: string;
+  narrativa: string;
+  destacados: string[];
+  resumenCorto: string;
 }
 
 export interface DebateSynthesis {
@@ -247,16 +265,6 @@ export interface DebateSynthesis {
   tension: string;
   proximasAcciones: string[];
   decisionRecomendada: string;
-}
-
-export interface Opportunity {
-  tipo: string;
-  titulo: string;
-  justificacion: string;
-}
-
-export interface OpportunityReport {
-  oportunidades: Opportunity[];
 }
 
 export interface Brief {

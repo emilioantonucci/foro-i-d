@@ -665,3 +665,73 @@ select.dg-input {
 .dg-lb-table th.num, .dg-lb-table td.num { text-align: right; }
 .dg-lb-table td { padding: 11px 14px; border-top: 1px solid var(--dg-gray-100); }
 .dg-lb-table tr.me { background: rgba(153, 204, 6, 0.10); }
+
+/* Modal (components/ui/Modal.tsx) */
+.dg-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.dg-modal {
+  width: 100%;
+  max-height: min(80vh, 720px);
+  display: flex;
+  flex-direction: column;
+  background: var(--dg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.25);
+}
+.dg-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--dg-gray-100);
+}
+.dg-modal__title {
+  margin: 0;
+  font-family: var(--font-secondary);
+  font-size: 18px;
+  color: var(--fg-primary);
+  letter-spacing: -0.01em;
+}
+.dg-modal__body {
+  padding: 18px 20px;
+  overflow-y: auto;
+}
+.dg-modal__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--dg-gray-100);
+}
+
+/* "Guardar PDF" del resumen semanal: al imprimir solo se ve .dg-print-area
+   (el diálogo de impresión del navegador permite guardar como PDF). */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .dg-print-area,
+  .dg-print-area * {
+    visibility: visible;
+  }
+  .dg-print-area {
+    position: absolute;
+    inset: 0;
+    max-height: none;
+    overflow: visible;
+    padding: 24px;
+  }
+  .dg-modal {
+    max-height: none;
+    box-shadow: none;
+  }
+}
