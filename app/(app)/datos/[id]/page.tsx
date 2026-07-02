@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getDato } from "@/lib/data/datos";
 import { getPoll } from "@/lib/data/polls";
 import PollWidget from "@/components/polls/PollWidget";
+import TriggerQuestions from "@/components/engage/TriggerQuestions";
 import { datoTipoBySlug } from "@/lib/constants";
 import DatoComments from "@/components/datos/DatoComments";
 import DeleteDatoButton from "@/components/datos/DeleteDatoButton";
@@ -130,6 +131,8 @@ export default async function DatoPage({
             {dato.descripcion}
           </p>
         )}
+
+        <TriggerQuestions preguntas={dato.preguntas ?? []} />
 
         {poll && <PollWidget poll={poll} />}
 

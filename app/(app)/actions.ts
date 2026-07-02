@@ -12,6 +12,7 @@ import {
   commentSchema,
   attachmentSchema,
   pollSchema,
+  preguntasSchema,
   type AttachmentInput,
   type PollInput,
 } from "@/lib/validation";
@@ -37,6 +38,8 @@ export interface CreatePostInput {
   archivo?: AttachmentInput;
   /** Encuesta opcional (2 a 4 opciones, estilo Instagram). */
   encuesta?: PollInput;
+  /** Preguntas disparadoras opcionales (máx 2). */
+  preguntas?: string[];
 }
 
 export interface ActionResult {
@@ -105,6 +108,11 @@ export async function createPostAction(
   const adj = attachmentColumns(input.archivo, user.id);
   if (adj.error) return { error: adj.error };
 
+  const preguntas = preguntasSchema.safeParse(
+    (input.preguntas ?? []).filter((p) => p.trim() !== ""),
+  );
+  if (!preguntas.success) return { error: firstError(preguntas.error) };
+
   const { data, error } = await supabase
     .from("posts")
     .insert({
@@ -117,6 +125,7 @@ export async function createPostAction(
       etiquetas: input.etiquetas ?? [],
       prioridad: input.prioridad || "media",
       aplicacion_interna: input.aplicacion_interna ?? [],
+      preguntas: preguntas.data,
       ...adj.cols,
     })
     .select("id")
@@ -349,6 +358,8 @@ export interface CreateDatoInput {
   archivo?: AttachmentInput;
   /** Encuesta opcional (2 a 4 opciones, estilo Instagram). */
   encuesta?: PollInput;
+  /** Preguntas disparadoras opcionales (máx 2). */
+  preguntas?: string[];
 }
 
 export async function createDatoAction(
@@ -371,6 +382,11 @@ export async function createDatoAction(
   const adj = attachmentColumns(input.archivo, user.id);
   if (adj.error) return { error: adj.error };
 
+  const preguntas = preguntasSchema.safeParse(
+    (input.preguntas ?? []).filter((p) => p.trim() !== ""),
+  );
+  if (!preguntas.success) return { error: firstError(preguntas.error) };
+
   const { data, error } = await supabase
     .from("datos")
     .insert({
@@ -380,6 +396,7 @@ export async function createDatoAction(
       url: parsed.data.url?.trim() || null,
       descripcion: parsed.data.descripcion?.trim() || null,
       etiquetas: input.etiquetas ?? [],
+      preguntas: preguntas.data,
       ...adj.cols,
     })
     .select("id")
