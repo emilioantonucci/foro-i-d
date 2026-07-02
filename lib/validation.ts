@@ -139,6 +139,29 @@ export const attachmentSchema = z.object({
 
 export type AttachmentInput = z.infer<typeof attachmentSchema>;
 
+// ---- encuestas (polls estilo Instagram) — migration 0013 ------------------
+export const POLL_LIMITS = { pregunta: 120, opcion: 60, maxOpciones: 4 } as const;
+
+export const pollSchema = z.object({
+  pregunta: z
+    .string()
+    .trim()
+    .min(3, "La pregunta de la encuesta es muy corta.")
+    .max(POLL_LIMITS.pregunta, `Máximo ${POLL_LIMITS.pregunta} caracteres.`),
+  opciones: z
+    .array(
+      z
+        .string()
+        .trim()
+        .min(1, "Hay una opción vacía en la encuesta.")
+        .max(POLL_LIMITS.opcion, `Cada opción admite hasta ${POLL_LIMITS.opcion} caracteres.`),
+    )
+    .min(2, "La encuesta necesita al menos 2 opciones.")
+    .max(POLL_LIMITS.maxOpciones, `La encuesta admite hasta ${POLL_LIMITS.maxOpciones} opciones.`),
+});
+
+export type PollInput = z.infer<typeof pollSchema>;
+
 export const COMMENT_MAX = 1000;
 export const commentSchema = z.object({
   comentario: z

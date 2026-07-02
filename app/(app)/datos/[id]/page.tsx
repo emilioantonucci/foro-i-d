@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Link2, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getDato } from "@/lib/data/datos";
+import { getPoll } from "@/lib/data/polls";
+import PollWidget from "@/components/polls/PollWidget";
 import { datoTipoBySlug } from "@/lib/constants";
 import DatoComments from "@/components/datos/DatoComments";
 import DeleteDatoButton from "@/components/datos/DeleteDatoButton";
@@ -22,6 +24,7 @@ export default async function DatoPage({
   const { id } = await params;
   const dato = await getDato(id);
   if (!dato) notFound();
+  const poll = await getPoll({ datoId: id });
 
   const supabase = await createClient();
   const {
@@ -127,6 +130,8 @@ export default async function DatoPage({
             {dato.descripcion}
           </p>
         )}
+
+        {poll && <PollWidget poll={poll} />}
 
         <Hashtags etiquetas={dato.etiquetas} />
 

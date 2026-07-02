@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Link2, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getPost } from "@/lib/data/posts";
+import { getPoll } from "@/lib/data/polls";
+import PollWidget from "@/components/polls/PollWidget";
 import VoteButtons from "@/components/post/VoteButtons";
 import CommentThread from "@/components/post/CommentThread";
 import GovernanceControls from "@/components/post/GovernanceControls";
@@ -23,6 +25,7 @@ export default async function PostPage({
   const { id } = await params;
   const post = await getPost(id);
   if (!post) notFound();
+  const poll = await getPoll({ postId: id });
 
   const supabase = await createClient();
   const {
@@ -174,6 +177,8 @@ export default async function PostPage({
                 ))}
               </div>
             )}
+
+            {poll && <PollWidget poll={poll} />}
 
             <Hashtags etiquetas={post.etiquetas} />
 

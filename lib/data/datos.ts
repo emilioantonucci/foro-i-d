@@ -14,6 +14,7 @@ export interface FeedDato extends Dato {
   likes_count: number;
   comentarios_count: number;
   liked: boolean; // current user already liked it
+  has_poll?: boolean;
 }
 
 export type DatoSort = "recientes" | "mas_gustados" | "mas_comentados";
@@ -102,6 +103,7 @@ export async function getDatosFeed(filters: DatoFilters = {}): Promise<DatoFeedR
     updated_at: r.updated_at,
     file_path: r.file_path ?? null,
     file_name: r.file_name ?? null,
+    has_poll: r.has_poll ?? false,
     autor: {
       id: r.user_id,
       nombre: r.autor_nombre ?? null,

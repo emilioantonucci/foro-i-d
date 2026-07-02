@@ -78,6 +78,7 @@ export type ActivityTipo =
   | "comento_dato"
   | "voto_enlace"
   | "like_dato"
+  | "voto_encuesta"
   | "insignia"
   | "rango";
 
@@ -91,6 +92,7 @@ export interface ActivityPayload {
   badge_nombre?: string;
   rango_anterior?: string;
   rango_nuevo?: string;
+  pregunta?: string;
 }
 
 export interface ActivityEvent {
@@ -215,6 +217,12 @@ export interface Badge {
 export interface PollSuggestion {
   pregunta: string;
   opciones: string[];
+}
+
+/** Respuesta de /api/ai/engage: sugerencias de interacción on-demand. */
+export interface Engagement {
+  encuesta: PollSuggestion | null;
+  preguntas: string[];
 }
 
 export interface LinkSummary {

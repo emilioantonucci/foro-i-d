@@ -15,6 +15,7 @@ export interface FeedPost extends Post {
   comentarios_count: number;
   votosPorTipo: Record<string, number>;
   misVotos: string[];
+  has_poll?: boolean;
 }
 
 export type FeedSort =
@@ -130,6 +131,7 @@ export async function getFeed(filters: FeedFilters = {}): Promise<FeedResult> {
     updated_at: r.updated_at,
     file_path: r.file_path ?? null,
     file_name: r.file_name ?? null,
+    has_poll: r.has_poll ?? false,
     autor: {
       id: r.user_id,
       nombre: r.autor_nombre ?? null,

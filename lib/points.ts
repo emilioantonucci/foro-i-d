@@ -74,4 +74,6 @@ export const PUNTOS = {
   publicar_dato: 5,
   comentar_dato: 3,
   like_dato: 2,
+  // Encuestas (migration 0013): cada voto recibido premia al autor.
+  voto_encuesta: 2,
 } as const;

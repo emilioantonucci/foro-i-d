@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageSquare, Link2, Sparkles, FileText } from "lucide-react";
+import { MessageSquare, Link2, Sparkles, FileText, BarChart3 } from "lucide-react";
 import type { FeedPost } from "@/lib/data/posts";
 import { timeAgo } from "@/lib/ui";
 import Avatar from "@/components/ui/Avatar";
@@ -44,6 +44,23 @@ export default function PostCard({ post }: { post: FeedPost }) {
             }}
           >
             <FileText size={12} aria-hidden="true" /> Adjunto
+          </span>
+        )}
+        {post.has_poll && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              background: "rgba(153,204,6,0.12)",
+              borderRadius: "var(--radius-pill)",
+              padding: "3px 10px",
+              fontSize: "11.5px",
+              fontWeight: 600,
+              color: "#6B9000",
+            }}
+          >
+            <BarChart3 size={12} aria-hidden="true" /> Encuesta
           </span>
         )}
       </div>

@@ -35,6 +35,11 @@ export function railText(e: ActivityEvent): ActivityText {
       };
     case "like_dato":
       return { texto: `le gustó “${titulo}”`, href: `/datos/${e.dato_id}` };
+    case "voto_encuesta":
+      return {
+        texto: `votó en la encuesta de “${titulo}”`,
+        href: e.post_id ? `/post/${e.post_id}` : `/datos/${e.dato_id}`,
+      };
     case "insignia":
       return {
         texto: `obtuvo la insignia ${p.badge_nombre ?? ""}`.trim(),
@@ -68,6 +73,8 @@ export function bellText(e: BellNotification): ActivityText {
       };
     case "like_dato":
       return { ...base, texto: `le dio me gusta a tu dato “${titulo}”` };
+    case "voto_encuesta":
+      return { ...base, texto: `votó en la encuesta de tu publicación “${titulo}”` };
     default:
       return base;
   }

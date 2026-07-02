@@ -9,18 +9,21 @@ import {
 } from "./client";
 import {
   LinkSummarySchema,
+  EngagementSchema,
   DebateSynthesisSchema,
   OpportunityReportSchema,
   BriefSchema,
 } from "./schemas";
 import {
   summaryPrompt,
+  engagePrompt,
   synthesisPrompt,
   opportunitiesPrompt,
   briefPrompt,
 } from "./prompts";
 import type {
   LinkSummary,
+  Engagement,
   DebateSynthesis,
   OpportunityReport,
   Brief,
@@ -94,6 +97,13 @@ export function generateSummary(input: {
     maxOutputTokens: 4096,
     ...(heavy ? { timeoutMs: 60_000 } : {}),
   });
+}
+
+export function generateEngagement(input: {
+  titulo: string;
+  resumen?: string;
+}): Promise<Engagement> {
+  return runStructured(engagePrompt(input), EngagementSchema);
 }
 
 export function synthesizeDebate(input: {
