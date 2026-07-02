@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser, unauthorized, aiErrorResponse, aiRateLimitResponse } from "@/lib/api";
 import { generateSummary } from "@/lib/gemini";
-import { fetchPageText } from "@/lib/scrape";
+import { fetchPageContent } from "@/lib/scrape";
 import { isYoutubeUrl, normalizeYoutubeUrl } from "@/lib/youtube";
 import { FILE_MAX_BYTES, FILE_MIME_PDF, FILE_MIME_DOCX } from "@/lib/validation";
 
@@ -72,7 +72,23 @@ export async function POST(req: Request) {
     youtubeUrl = normalizeYoutubeUrl(url) ?? url;
   } else if (url && !rawText) {
     // Enrich with the page content when only a URL is given (best effort).
-    rawText = (await fetchPageText(url)) ?? undefined;
+    const page = await fetchPageContent(url);
+    if (page.ok) {
+      rawText = page.text;
+    } else if (page.blocked) {
+      // Paywall / muro anti-bot: no tiene sentido analizar. La UI usa `code`
+      // para sugerir subir el PDF descargado.
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "RESTRICTED",
+          error:
+            "Este sitio restringe el acceso automático. Descargá el PDF del recurso y subilo acá para analizarlo.",
+        },
+        { status: 422 },
+      );
+    }
+    // no bloqueado pero sin texto -> se analiza desde la URL sola (best effort)
   }
 
   try {
