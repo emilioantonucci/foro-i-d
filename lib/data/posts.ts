@@ -132,6 +132,8 @@ export async function getFeed(filters: FeedFilters = {}): Promise<FeedResult> {
     file_path: r.file_path ?? null,
     file_name: r.file_name ?? null,
     has_poll: r.has_poll ?? false,
+    fecha_original: r.fecha_original ?? null,
+    tipo_material: r.tipo_material ?? null,
     autor: {
       id: r.user_id,
       nombre: r.autor_nombre ?? null,

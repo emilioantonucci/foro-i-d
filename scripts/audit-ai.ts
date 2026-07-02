@@ -4,8 +4,8 @@
  * Qué hace:
  *  1. Lista los modelos disponibles para la API key actual (endpoint ListModels)
  *     y muestra cuáles soportan `generateContent`.
- *  2. Ejecuta los 4 prompts REALES de la app (resumen, síntesis, oportunidades,
- *     brief) contra cada modelo Flash/Flash-Lite candidato, con la misma
+ *  2. Ejecuta los 3 prompts REALES de la app (resumen, síntesis, brief)
+ *     contra cada modelo Flash/Flash-Lite candidato, con la misma
  *     generationConfig que producción (responseMimeType JSON, temperature 0.4).
  *  3. Valida cada respuesta contra su schema Zod real y mide latencia, tokens de
  *     salida y campos poblados, para fundamentar la elección de modelo.
@@ -17,13 +17,11 @@ import type { ZodType } from "zod";
 import {
   summaryPrompt,
   synthesisPrompt,
-  opportunitiesPrompt,
   briefPrompt,
 } from "@/lib/gemini/prompts";
 import {
   LinkSummarySchema,
   DebateSynthesisSchema,
-  OpportunityReportSchema,
   BriefSchema,
 } from "@/lib/gemini/schemas";
 
@@ -82,7 +80,6 @@ interface Feature {
 const FEATURES: Feature[] = [
   { key: "resumen", prompt: summaryPrompt(sampleSummary), schema: LinkSummarySchema },
   { key: "sintesis", prompt: synthesisPrompt(sampleSynthesis), schema: DebateSynthesisSchema },
-  { key: "oportunidades", prompt: opportunitiesPrompt({ posts: samplePosts }), schema: OpportunityReportSchema },
   { key: "brief", prompt: briefPrompt({ posts: samplePosts }), schema: BriefSchema },
 ];
 

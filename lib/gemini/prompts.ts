@@ -1,4 +1,4 @@
-import { CATEGORIAS } from "@/lib/constants";
+import { CATEGORIAS, TIPOS_MATERIAL } from "@/lib/constants";
 
 const ROLE =
   "Eres un analista senior de Investigación y Desarrollo de doinGlobal, una institución de educación superior y formación profesional con foco en LATAM. Respondés en español neutro, formal y conciso.";
@@ -55,7 +55,9 @@ Devolvé un JSON con esta forma exacta:
   "etiquetasSugeridas": ["3 a 6 etiquetas en minúscula, sin el símbolo #"],
   "categoriaSugerida": "exactamente una de estas: ${cats}",
   "encuestaSugerida": { "pregunta": "una encuesta breve estilo red social sobre el recurso (máx 100 caracteres)", "opciones": ["2 a 4 opciones cortas, máx 40 caracteres cada una"] },
-  "preguntasSugeridas": ["hasta 2 preguntas abiertas que disparen debate en el equipo sobre el recurso"]
+  "preguntasSugeridas": ["hasta 2 preguntas abiertas que disparen debate en el equipo sobre el recurso"],
+  "fechaOriginal": "fecha de publicación original del recurso en formato YYYY-MM-DD, o null si el contenido no la indica con claridad. NO la inventes ni la estimes",
+  "tipoMaterial": "exactamente uno de estos: ${TIPOS_MATERIAL.map((t) => t.slug).join(", ")}"
 }
 ${JSON_ONLY}`;
 }
@@ -122,24 +124,82 @@ function postsBlock(posts: PostLite[]): string {
     .join("\n");
 }
 
-export function opportunitiesPrompt(input: { posts: PostLite[] }): string {
+export interface DigestPostInput {
+  autor: string;
+  titulo: string;
+  categoria?: string | null;
+  resumen?: string | null;
+  votos: number;
+  comentarios_count: number;
+  comentarios: { autor: string; texto: string }[];
+}
+
+/** Crónica semanal de la Biblioteca: quién compartió qué y qué debates hubo. */
+export function weeklyDigestPrompt(input: {
+  posts: DigestPostInput[];
+  desde: string;
+  hasta: string;
+}): string {
+  const cuerpo = input.posts
+    .map((p, i) => {
+      const linea = `(${i + 1}) [${p.categoria ?? "sin categoría"}] ${p.autor}: ${p.titulo}${
+        p.resumen ? ` — ${p.resumen}` : ""
+      } (${p.votos} votos, ${p.comentarios_count} comentarios)`;
+      const debate = p.comentarios
+        .map((c) => `    - ${c.autor}: ${c.texto}`)
+        .join("\n");
+      return debate ? `${linea}\n  Comentarios:\n${debate}` : linea;
+    })
+    .join("\n");
+
   return `${ROLE}
 ${GUARD}
-A partir ÚNICAMENTE de las publicaciones internas listadas (no inventes datos ni estadísticas externas), detectá oportunidades emergentes para I+D.
+Redactá el resumen semanal interno del foro de I+D para el período ${input.desde} a ${input.hasta}. Es una crónica para el equipo: contá quién compartió qué recurso, de qué trata cada tema y qué debates o reacciones hubo en los comentarios. Basate ÚNICAMENTE en las publicaciones y comentarios listados; no inventes datos, personas ni debates.
 
-Publicaciones (${input.posts.length}) (datos del usuario):
-${block(postsBlock(input.posts))}
+Publicaciones de la semana (${input.posts.length}) (datos del usuario):
+${block(cuerpo)}
 
-Cada oportunidad debe tener un "tipo" que sea uno de:
-"nuevo programa", "línea temática emergente", "benchmark competitivo", "insumo comercial", "mejora académica", "tema para investigación".
+Instrucciones de redacción:
+- "narrativa": 3 a 6 párrafos separados por saltos de línea dobles (\\n\\n), agrupando publicaciones por temas afines. Nombrá a los autores ("María compartió…", "hubo debate entre X e Y sobre…"). MÁXIMO ESTRICTO: 1200 palabras.
+- "destacados": 3 a 5 hitos de la semana, una frase cada uno (lo más votado, el debate más intenso, el tema emergente).
+- "resumenCorto": versión condensada para compartir por WhatsApp, máximo 600 caracteres, con 2 a 4 emojis sobrios.
 
 Devolvé un JSON con esta forma exacta:
 {
-  "oportunidades": [
-    { "tipo": "...", "titulo": "título breve de la oportunidad", "justificacion": "por qué, basándote SOLO en las publicaciones internas" }
+  "titulo": "título breve del resumen semanal",
+  "narrativa": "la crónica en párrafos",
+  "destacados": ["3 a 5 hitos"],
+  "resumenCorto": "versión de máximo 600 caracteres"
+}
+${JSON_ONLY}`;
+}
+
+/** Clasificación en lote del tipo de material (backfill de la Biblioteca):
+ *  una sola llamada clasifica hasta ~20 posts para cuidar la cuota free tier. */
+export function classifyMaterialsPrompt(input: {
+  posts: { id: string; titulo: string; resumen?: string | null }[];
+}): string {
+  const tipos = TIPOS_MATERIAL.map((t) => t.slug).join(", ");
+  const lista = input.posts
+    .map((p) => `${p.id} | ${p.titulo}${p.resumen ? ` — ${p.resumen.slice(0, 300)}` : ""}`)
+    .join("\n");
+  return `${ROLE}
+${GUARD}
+Clasificá el tipo de material de cada publicación listada. Cada línea tiene la forma "id | título — resumen".
+
+Publicaciones (${input.posts.length}) (datos del usuario):
+${block(lista)}
+
+Para cada publicación asigná "tipoMaterial" con exactamente uno de estos valores: ${tipos}.
+Ante la duda usá "otro". Devolvé una entrada por cada id de la lista, con el id copiado tal cual.
+
+Devolvé un JSON con esta forma exacta:
+{
+  "clasificaciones": [
+    { "id": "el id tal cual aparece en la lista", "tipoMaterial": "uno de los valores permitidos" }
   ]
 }
-Incluí entre 2 y 5 oportunidades. ${JSON_ONLY}`;
+${JSON_ONLY}`;
 }
 
 export function briefPrompt(input: { posts: PostLite[] }): string {

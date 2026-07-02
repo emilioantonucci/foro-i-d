@@ -11,21 +11,24 @@ import {
   LinkSummarySchema,
   EngagementSchema,
   DebateSynthesisSchema,
-  OpportunityReportSchema,
+  WeeklyDigestSchema,
+  MaterialClassificationSchema,
   BriefSchema,
 } from "./schemas";
 import {
   summaryPrompt,
   engagePrompt,
   synthesisPrompt,
-  opportunitiesPrompt,
+  weeklyDigestPrompt,
+  classifyMaterialsPrompt,
   briefPrompt,
+  type DigestPostInput,
 } from "./prompts";
 import type {
   LinkSummary,
   Engagement,
   DebateSynthesis,
-  OpportunityReport,
+  WeeklyDigest,
   Brief,
 } from "@/lib/types";
 
@@ -114,10 +117,23 @@ export function synthesizeDebate(input: {
   return runStructured(synthesisPrompt(input), DebateSynthesisSchema);
 }
 
-export function detectOpportunities(input: {
-  posts: { titulo: string; resumen?: string | null; categoria?: string | null }[];
-}): Promise<OpportunityReport> {
-  return runStructured(opportunitiesPrompt(input), OpportunityReportSchema);
+export function generateWeeklyDigest(input: {
+  posts: DigestPostInput[];
+  desde: string;
+  hasta: string;
+}): Promise<WeeklyDigest> {
+  // 1200 palabras ≈ 2500-3000 tokens: el tope default (2048) cortaría el JSON
+  // a mitad de string y rompería el parse.
+  return runStructured(weeklyDigestPrompt(input), WeeklyDigestSchema, {
+    maxOutputTokens: 4096,
+    timeoutMs: 60_000,
+  });
+}
+
+export function classifyMaterials(input: {
+  posts: { id: string; titulo: string; resumen?: string | null }[];
+}): Promise<{ clasificaciones: { id: string; tipoMaterial: string }[] }> {
+  return runStructured(classifyMaterialsPrompt(input), MaterialClassificationSchema);
 }
 
 export function generateBrief(input: {

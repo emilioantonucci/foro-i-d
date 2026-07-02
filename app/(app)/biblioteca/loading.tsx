@@ -4,12 +4,9 @@ export default function Loading() {
   return (
     <div>
       <SkelHeading />
-      <SkelPanel h={360} />
+      <SkelPanel h={130} />
       <div style={{ height: "16px" }} />
-      <div className="dg-grid-halves">
-        <SkelPanel h={180} />
-        <SkelPanel h={180} />
-      </div>
+      <SkelPanel h={420} />
     </div>
   );
 }

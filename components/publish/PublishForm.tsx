@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, X, AlertTriangle } from "lucide-react";
-import { CATEGORIAS, PRIORIDADES, APLICACIONES_INTERNAS } from "@/lib/constants";
+import { CATEGORIAS, PRIORIDADES, APLICACIONES_INTERNAS, TIPOS_MATERIAL, tipoMaterialBySlug } from "@/lib/constants";
 import { PUNTOS } from "@/lib/points";
 import { createPostAction } from "@/app/(app)/actions";
 import { PUBLISH_LIMITS, type PollInput } from "@/lib/validation";
@@ -25,6 +25,12 @@ function isValidUrl(value: string): boolean {
   }
 }
 
+/** YYYY-MM-DD y no futura (la IA no debe "predecir" fechas). */
+function isValidFechaOriginal(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  return value <= new Date().toISOString().slice(0, 10);
+}
+
 export default function PublishForm() {
   const router = useRouter();
   const toast = useToast();
@@ -38,6 +44,8 @@ export default function PublishForm() {
   const [tagInput, setTagInput] = useState("");
   const [aplicaciones, setAplicaciones] = useState<string[]>([]);
   const [file, setFile] = useState<SourceFile | null>(null);
+  const [fechaOriginal, setFechaOriginal] = useState("");
+  const [tipoMaterial, setTipoMaterial] = useState("");
 
   const [aiRiesgos, setAiRiesgos] = useState<string[]>([]);
   const [aiTags, setAiTags] = useState<string[]>([]);
@@ -99,6 +107,12 @@ export default function PublishForm() {
     setAiRiesgos(data.riesgos ?? []);
     if (data.encuestaSugerida?.pregunta) setPollSuggestion(data.encuestaSugerida);
     if (data.preguntasSugeridas?.length) setQuestionSuggestions(data.preguntasSugeridas);
+    if (data.fechaOriginal && isValidFechaOriginal(data.fechaOriginal)) {
+      setFechaOriginal(data.fechaOriginal);
+    }
+    if (data.tipoMaterial && tipoMaterialBySlug(data.tipoMaterial)) {
+      setTipoMaterial(data.tipoMaterial);
+    }
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -121,6 +135,8 @@ export default function PublishForm() {
       archivo: file ?? undefined,
       encuesta: encuesta ?? undefined,
       preguntas,
+      fecha_original: fechaOriginal || undefined,
+      tipo_material: tipoMaterial || undefined,
     });
     // On success the action redirects; only errors return here.
     if (result?.error) {
@@ -245,6 +261,32 @@ export default function PublishForm() {
                   })}
                 </div>
               </div>
+            </div>
+
+            <div className="dg-grid-halves">
+              <Field
+                id="fecha-original"
+                label="Fecha de publicación original"
+                hint="La detecta la IA; corregila si hace falta."
+              >
+                <Input
+                  type="date"
+                  value={fechaOriginal}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setFechaOriginal(e.target.value)}
+                />
+              </Field>
+
+              <Field id="tipo-material" label="Tipo de material">
+                <Select value={tipoMaterial} onChange={(e) => setTipoMaterial(e.target.value)}>
+                  <option value="">Sin clasificar</option>
+                  {TIPOS_MATERIAL.map((t) => (
+                    <option key={t.slug} value={t.slug}>
+                      {t.nombre}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
             </div>
 
             <Field
