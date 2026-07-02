@@ -126,6 +126,11 @@ export interface Post {
   marcado_relevante: boolean;
   created_at: string;
   updated_at: string;
+  // adjunto en Storage (migration 0012) — opcionales en filas viejas
+  file_path?: string | null;
+  file_name?: string | null;
+  file_mime?: string | null;
+  file_size?: number | null;
 }
 
 export interface Comment {
@@ -167,6 +172,11 @@ export interface Dato {
   etiquetas: string[];
   created_at: string;
   updated_at: string;
+  // adjunto en Storage (migration 0012) — opcionales en filas viejas
+  file_path?: string | null;
+  file_name?: string | null;
+  file_mime?: string | null;
+  file_size?: number | null;
 }
 
 export interface DatoComment {
@@ -201,6 +211,12 @@ export interface Badge {
 
 // ----- AI output shapes (validated by zod in lib/gemini/schemas.ts) -----
 
+/** Sugerencia de encuesta generada por la IA (2 a 4 opciones). */
+export interface PollSuggestion {
+  pregunta: string;
+  opciones: string[];
+}
+
 export interface LinkSummary {
   titulo: string;
   resumen: string;
@@ -209,6 +225,8 @@ export interface LinkSummary {
   riesgos: string[];
   etiquetasSugeridas: string[];
   categoriaSugerida: string;
+  encuestaSugerida?: PollSuggestion | null;
+  preguntasSugeridas?: string[];
 }
 
 export interface DebateSynthesis {

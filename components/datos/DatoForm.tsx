@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, X } from "lucide-react";
+import { X } from "lucide-react";
 import { DATO_TIPOS } from "@/lib/constants";
 import { createDatoAction } from "@/app/(app)/actions";
 import { DATO_LIMITS } from "@/lib/validation";
@@ -12,6 +12,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Field, { Input, Textarea, Select } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
+import SourceInput, { type SourceFile, type SourceKind } from "@/components/publish/SourceInput";
 
 function isValidUrl(value: string): boolean {
   try {
@@ -31,8 +32,8 @@ export default function DatoForm() {
   const [descripcion, setDescripcion] = useState("");
   const [etiquetas, setEtiquetas] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [file, setFile] = useState<SourceFile | null>(null);
 
-  const [aiLoading, setAiLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [attempted, setAttempted] = useState(false);
@@ -55,33 +56,18 @@ export default function DatoForm() {
     setTagInput("");
   }
 
-  async function analizarConIA() {
-    if (!url.trim() && !descripcion.trim()) {
-      toast.error("Pegá una URL o un texto para analizar.");
-      return;
-    }
-    setAiLoading(true);
-    try {
-      const res = await fetch("/api/ai/summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim(), rawText: descripcion.trim() || undefined }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.ok) throw new Error(json.error ?? "No se pudo analizar.");
-      const data = json.data as LinkSummary;
-      if (!titulo.trim() && data.titulo?.trim()) setTitulo(data.titulo.trim());
-      if (data.resumen) setDescripcion(data.resumen);
-      setEtiquetas((prev) =>
-        Array.from(
-          new Set([...prev, ...(data.etiquetasSugeridas ?? []).map((t) => t.replace(/^#/, ""))]),
-        ),
-      );
-      toast.success("Análisis listo · revisá y ajustá los campos");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error al analizar con IA.");
-    } finally {
-      setAiLoading(false);
+  function onAnalyzed(data: LinkSummary, source: SourceKind) {
+    if (!titulo.trim() && data.titulo?.trim()) setTitulo(data.titulo.trim());
+    if (data.resumen) setDescripcion(data.resumen);
+    setEtiquetas((prev) =>
+      Array.from(
+        new Set([...prev, ...(data.etiquetasSugeridas ?? []).map((t) => t.replace(/^#/, ""))]),
+      ),
+    );
+    // Sugerir el tipo según la fuente, sin pisar una elección explícita.
+    if (tipo === "otro") {
+      if (source === "youtube") setTipo("video");
+      else if (source === "pdf" || source === "docx") setTipo("articulo");
     }
   }
 
@@ -93,7 +79,14 @@ export default function DatoForm() {
       return;
     }
     setSubmitting(true);
-    const result = await createDatoAction({ titulo, tipo, url, descripcion, etiquetas });
+    const result = await createDatoAction({
+      titulo,
+      tipo,
+      url,
+      descripcion,
+      etiquetas,
+      archivo: file ?? undefined,
+    });
     // On success the action redirects; only errors return here.
     if (result?.error) {
       toast.error(result.error);
@@ -158,46 +151,29 @@ export default function DatoForm() {
             />
           </Field>
 
-          <div className="dg-grid-halves">
-            <Field id="dato-tipo" label="Tipo">
-              <Select value={tipo} onChange={(e) => setTipo(e.target.value)}>
-                {DATO_TIPOS.map((t) => (
-                  <option key={t.slug} value={t.slug}>
-                    {t.nombre}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+          <Field id="dato-tipo" label="Tipo">
+            <Select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+              {DATO_TIPOS.map((t) => (
+                <option key={t.slug} value={t.slug}>
+                  {t.nombre}
+                </option>
+              ))}
+            </Select>
+          </Field>
 
-            <Field
-              id="dato-url"
-              label="Enlace (opcional)"
-              error={urlError}
-              hint={!urlError ? "Pegá el enlace y dejá que la IA te ayude." : undefined}
-            >
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                <Input
-                  type="url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  onBlur={() => setTouched((t) => ({ ...t, url: true }))}
-                  placeholder="https://…"
-                  invalid={!!urlError}
-                  style={{ flex: 1, minWidth: "160px" }}
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={analizarConIA}
-                  loading={aiLoading}
-                  icon={!aiLoading ? <Sparkles size={15} color="#99CC06" aria-hidden="true" /> : undefined}
-                >
-                  {aiLoading ? "Analizando…" : "IA"}
-                </Button>
-              </div>
-            </Field>
-          </div>
+          <SourceInput
+            idPrefix="dato"
+            label="Enlace (opcional)"
+            url={url}
+            onUrlChange={setUrl}
+            onUrlBlur={() => setTouched((t) => ({ ...t, url: true }))}
+            urlError={urlError}
+            rawTextFallback={descripcion}
+            file={file}
+            onFileChange={setFile}
+            onAnalyzed={onAnalyzed}
+            analyzeLabel="IA"
+          />
 
           <Field
             id="dato-descripcion"

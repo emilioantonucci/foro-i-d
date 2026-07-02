@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageSquare, Link2 } from "lucide-react";
+import { MessageSquare, Link2, FileText } from "lucide-react";
 import type { FeedDato } from "@/lib/data/datos";
 import { datoTipoBySlug } from "@/lib/constants";
 import { timeAgo } from "@/lib/ui";
@@ -24,6 +24,24 @@ export default function DatoCard({ dato }: { dato: FeedDato }) {
           </div>
           <div style={{ fontSize: "11.5px", color: "var(--fg-muted)" }}>{timeAgo(dato.created_at)}</div>
         </div>
+        {dato.file_name && (
+          <span
+            title={dato.file_name}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              background: "var(--dg-gray-100)",
+              borderRadius: "var(--radius-pill)",
+              padding: "3px 10px",
+              fontSize: "11.5px",
+              fontWeight: 600,
+              color: "var(--dg-gray-700)",
+            }}
+          >
+            <FileText size={12} aria-hidden="true" /> Adjunto
+          </span>
+        )}
         {tipo && <Badge color={tipo.color}>{tipo.nombre}</Badge>}
       </div>
 

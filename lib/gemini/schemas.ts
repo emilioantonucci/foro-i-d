@@ -2,6 +2,11 @@ import { z } from "zod";
 
 // Defaults make the schemas tolerant to minor model omissions (MVP resilience).
 
+export const PollSuggestionSchema = z.object({
+  pregunta: z.string().default(""),
+  opciones: z.array(z.string()).default([]),
+});
+
 export const LinkSummarySchema = z.object({
   titulo: z.string().default(""),
   resumen: z.string().default(""),
@@ -10,6 +15,10 @@ export const LinkSummarySchema = z.object({
   riesgos: z.array(z.string()).default([]),
   etiquetasSugeridas: z.array(z.string()).default([]),
   categoriaSugerida: z.string().default(""),
+  // Sugerencias de interacción (encuesta + preguntas disparadoras). Vienen en
+  // la misma llamada para no gastar cuota extra del free tier.
+  encuestaSugerida: PollSuggestionSchema.nullish().default(null),
+  preguntasSugeridas: z.array(z.string()).default([]),
 });
 
 export const DebateSynthesisSchema = z.object({

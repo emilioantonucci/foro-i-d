@@ -1,6 +1,12 @@
 import "server-only";
 import type { ZodType } from "zod";
-import { callGeminiJSON, geminiModelName, GeminiOutputError } from "./client";
+import {
+  callGeminiJSON,
+  geminiModelName,
+  GeminiOutputError,
+  type GeminiPart,
+  type GeminiCallOpts,
+} from "./client";
 import {
   LinkSummarySchema,
   DebateSynthesisSchema,
@@ -34,9 +40,13 @@ function stripFences(s: string): string {
     .trim();
 }
 
-async function runStructured<T>(prompt: string, schema: ZodType<T>): Promise<T> {
+async function runStructured<T>(
+  input: string | GeminiPart[],
+  schema: ZodType<T>,
+  opts?: GeminiCallOpts,
+): Promise<T> {
   for (let attempt = 0; attempt < 2; attempt++) {
-    const raw = await callGeminiJSON(prompt);
+    const raw = await callGeminiJSON(input, opts);
     try {
       return schema.parse(JSON.parse(stripFences(raw)));
     } catch (e) {
@@ -55,8 +65,35 @@ async function runStructured<T>(prompt: string, schema: ZodType<T>): Promise<T> 
 export function generateSummary(input: {
   url?: string;
   rawText?: string;
+  /** PDF subido, en base64 — viaja como inline_data (soporte nativo). */
+  pdfBase64?: string;
+  /** Video público de YouTube — viaja como file_data (soporte nativo). */
+  youtubeUrl?: string;
+  /** Marca que el rawText salió de un .docx (ajusta la consigna). */
+  fromDocx?: boolean;
 }): Promise<LinkSummary> {
-  return runStructured(summaryPrompt(input), LinkSummarySchema);
+  const source = input.pdfBase64
+    ? "pdf"
+    : input.youtubeUrl
+      ? "youtube"
+      : input.fromDocx
+        ? "docx"
+        : "web";
+  const parts: GeminiPart[] = [
+    { text: summaryPrompt({ url: input.url, rawText: input.rawText, source }) },
+  ];
+  if (input.pdfBase64) {
+    parts.push({ inline_data: { mime_type: "application/pdf", data: input.pdfBase64 } });
+  } else if (input.youtubeUrl) {
+    parts.push({ file_data: { file_uri: input.youtubeUrl } });
+  }
+  const heavy = source === "pdf" || source === "youtube";
+  // 4096: el schema extendido (encuesta + preguntas) más un documento largo
+  // truncaban con el tope global de 2048.
+  return runStructured(parts, LinkSummarySchema, {
+    maxOutputTokens: 4096,
+    ...(heavy ? { timeoutMs: 60_000 } : {}),
+  });
 }
 
 export function synthesizeDebate(input: {

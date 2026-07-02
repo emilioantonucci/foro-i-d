@@ -128,6 +128,8 @@ export async function getFeed(filters: FeedFilters = {}): Promise<FeedResult> {
     marcado_relevante: r.marcado_relevante,
     created_at: r.created_at,
     updated_at: r.updated_at,
+    file_path: r.file_path ?? null,
+    file_name: r.file_name ?? null,
     autor: {
       id: r.user_id,
       nombre: r.autor_nombre ?? null,

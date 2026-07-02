@@ -37,9 +37,30 @@ export function geminiModelName(): string {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** Multimodal request part: prompt text, inline document (base64) or a
+ *  Gemini-native file reference (e.g. a public YouTube URL). */
+export type GeminiPart =
+  | { text: string }
+  | { inline_data: { mime_type: string; data: string } }
+  | { file_data: { file_uri: string } };
+
+export interface GeminiCallOpts {
+  /** Override del tope de salida (el summary extendido usa 4096). */
+  maxOutputTokens?: number;
+  /** Override del timeout — solo para llamadas pesadas (PDF/YouTube). */
+  timeoutMs?: number;
+}
+
 /** Calls Gemini and returns the raw text (expected to be JSON). Retries on
- *  transient 503/429 with a short backoff. */
-export async function callGeminiJSON(prompt: string): Promise<string> {
+ *  transient 503/429 with a short backoff. Accepts a plain prompt or a
+ *  multimodal parts array (text + PDF inline / YouTube file_data). */
+export async function callGeminiJSON(
+  input: string | GeminiPart[],
+  opts: GeminiCallOpts = {},
+): Promise<string> {
+  const parts: GeminiPart[] = typeof input === "string" ? [{ text: input }] : input;
+  const maxOutputTokens = opts.maxOutputTokens ?? MAX_OUTPUT_TOKENS;
+  const timeoutMs = opts.timeoutMs ?? REQUEST_TIMEOUT_MS;
   const { apiKey, model } = getGeminiConfig();
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
     model,
@@ -59,15 +80,15 @@ export async function callGeminiJSON(prompt: string): Promise<string> {
           "x-goog-api-key": apiKey,
         },
         body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          contents: [{ role: "user", parts }],
           generationConfig: {
             responseMimeType: "application/json",
             temperature: 0.4,
-            maxOutputTokens: MAX_OUTPUT_TOKENS,
+            maxOutputTokens,
           },
         }),
         cache: "no-store",
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        signal: AbortSignal.timeout(timeoutMs),
       });
     } catch (e) {
       // Timeout/abort -> transitorio (reintentable); cualquier otra cosa -> conexión.
@@ -117,8 +138,8 @@ export async function callGeminiJSON(prompt: string): Promise<string> {
     }
 
     /* eslint-disable @typescript-eslint/no-explicit-any */
-    const parts = (json as any)?.candidates?.[0]?.content?.parts ?? [];
-    const text = parts.map((p: any) => p?.text ?? "").join("").trim();
+    const outParts = (json as any)?.candidates?.[0]?.content?.parts ?? [];
+    const text = outParts.map((p: any) => p?.text ?? "").join("").trim();
     /* eslint-enable @typescript-eslint/no-explicit-any */
 
     if (!text) throw new GeminiOutputError("La IA devolvió una respuesta vacía.");

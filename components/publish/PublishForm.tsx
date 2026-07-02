@@ -12,6 +12,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Field, { Input, Textarea, Select } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
+import SourceInput, { type SourceFile } from "@/components/publish/SourceInput";
 
 function isValidUrl(value: string): boolean {
   try {
@@ -34,8 +35,8 @@ export default function PublishForm() {
   const [etiquetas, setEtiquetas] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [aplicaciones, setAplicaciones] = useState<string[]>([]);
+  const [file, setFile] = useState<SourceFile | null>(null);
 
-  const [aiLoading, setAiLoading] = useState(false);
   const [aiRiesgos, setAiRiesgos] = useState<string[]>([]);
   const [aiTags, setAiTags] = useState<string[]>([]);
 
@@ -69,47 +70,27 @@ export default function PublishForm() {
     setAplicaciones((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]));
   }
 
-  async function analizarConIA() {
-    if (!url.trim() && !resumen.trim()) {
-      toast.error("Pegá una URL o un texto para analizar.");
-      return;
+  function onAnalyzed(data: LinkSummary) {
+    if (!titulo.trim()) {
+      const aiTitle = data.titulo.trim();
+      if (aiTitle) setTitulo(aiTitle);
+      else if (data.resumen) setTitulo(deriveTitle(data));
     }
-    setAiLoading(true);
-    try {
-      const res = await fetch("/api/ai/summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim(), rawText: resumen.trim() || undefined }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.ok) throw new Error(json.error ?? "No se pudo analizar.");
-      const data = json.data as LinkSummary;
-      if (!titulo.trim()) {
-        const aiTitle = data.titulo.trim();
-        if (aiTitle) setTitulo(aiTitle);
-        else if (data.resumen) setTitulo(deriveTitle(data));
-      }
-      if (data.resumen) setResumen(data.resumen);
-      if (data.aplicacionIyD) setRelevancia(data.aplicacionIyD);
-      if (data.categoriaSugerida) {
-        const match = CATEGORIAS.find(
-          (c) => c.nombre.toLowerCase() === data.categoriaSugerida.toLowerCase(),
-        );
-        if (match) setCategoria(match.slug);
-      }
-      setEtiquetas((prev) =>
-        Array.from(
-          new Set([...prev, ...(data.etiquetasSugeridas ?? []).map((t) => t.replace(/^#/, ""))]),
-        ),
+    if (data.resumen) setResumen(data.resumen);
+    if (data.aplicacionIyD) setRelevancia(data.aplicacionIyD);
+    if (data.categoriaSugerida) {
+      const match = CATEGORIAS.find(
+        (c) => c.nombre.toLowerCase() === data.categoriaSugerida.toLowerCase(),
       );
-      setAiTags(data.etiquetasSugeridas ?? []);
-      setAiRiesgos(data.riesgos ?? []);
-      toast.success("Análisis listo · revisá y ajustá los campos");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error al analizar con IA.");
-    } finally {
-      setAiLoading(false);
+      if (match) setCategoria(match.slug);
     }
+    setEtiquetas((prev) =>
+      Array.from(
+        new Set([...prev, ...(data.etiquetasSugeridas ?? []).map((t) => t.replace(/^#/, ""))]),
+      ),
+    );
+    setAiTags(data.etiquetasSugeridas ?? []);
+    setAiRiesgos(data.riesgos ?? []);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -129,6 +110,7 @@ export default function PublishForm() {
       etiquetas,
       prioridad,
       aplicacion_interna: aplicaciones,
+      archivo: file ?? undefined,
     });
     // On success the action redirects; only errors return here.
     if (result?.error) {
@@ -174,34 +156,17 @@ export default function PublishForm() {
         {/* MAIN FORM */}
         <Card pad="lg">
           <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-            <Field
-              id="url"
-              label="URL del recurso"
-              error={urlError}
-              hint={!urlError ? "Pegá el enlace y dejá que la IA pre-rellene los campos." : undefined}
-            >
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                <Input
-                  type="url"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  onBlur={() => setTouched((t) => ({ ...t, url: true }))}
-                  placeholder="https://…"
-                  invalid={!!urlError}
-                  style={{ flex: 1, minWidth: "200px" }}
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={analizarConIA}
-                  loading={aiLoading}
-                  icon={!aiLoading ? <Sparkles size={15} color="#99CC06" aria-hidden="true" /> : undefined}
-                >
-                  {aiLoading ? "Analizando…" : "Analizar con IA"}
-                </Button>
-              </div>
-            </Field>
+            <SourceInput
+              idPrefix="publish"
+              url={url}
+              onUrlChange={setUrl}
+              onUrlBlur={() => setTouched((t) => ({ ...t, url: true }))}
+              urlError={urlError}
+              rawTextFallback={resumen}
+              file={file}
+              onFileChange={setFile}
+              onAnalyzed={onAnalyzed}
+            />
 
             <Field
               id="titulo"

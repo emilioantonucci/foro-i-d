@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageSquare, Link2, Sparkles } from "lucide-react";
+import { MessageSquare, Link2, Sparkles, FileText } from "lucide-react";
 import type { FeedPost } from "@/lib/data/posts";
 import { timeAgo } from "@/lib/ui";
 import Avatar from "@/components/ui/Avatar";
@@ -28,6 +28,24 @@ export default function PostCard({ post }: { post: FeedPost }) {
       <div style={{ display: "flex", flexWrap: "wrap", gap: "7px", marginBottom: "10px" }}>
         <CategoryPill categoria={post.categoria} />
         <StatusBadge estado={post.estado} />
+        {post.file_name && (
+          <span
+            title={post.file_name}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              background: "var(--dg-gray-100)",
+              borderRadius: "var(--radius-pill)",
+              padding: "3px 10px",
+              fontSize: "11.5px",
+              fontWeight: 600,
+              color: "var(--dg-gray-700)",
+            }}
+          >
+            <FileText size={12} aria-hidden="true" /> Adjunto
+          </span>
+        )}
       </div>
 
       {/* title */}

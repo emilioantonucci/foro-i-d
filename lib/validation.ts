@@ -113,6 +113,32 @@ export const datoSchema = z.object({
     .optional(),
 });
 
+// ---- adjuntos (PDF / Word) — bucket `recursos`, migration 0012 -----------
+export const FILE_MAX_BYTES = 12 * 1024 * 1024; // 12MB (cabe en Gemini como base64)
+export const FILE_MIME_PDF = "application/pdf";
+export const FILE_MIME_DOCX =
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+export const ALLOWED_FILE_MIMES = [FILE_MIME_PDF, FILE_MIME_DOCX] as const;
+
+/** Metadata del archivo YA subido a Storage (la subida va directo del
+ *  navegador al bucket; el server solo persiste la referencia). */
+export const attachmentSchema = z.object({
+  path: z
+    .string()
+    .min(1)
+    .max(300)
+    .refine((p) => !p.includes(".."), "Ruta de archivo inválida."),
+  name: z.string().trim().min(1).max(200),
+  mime: z.enum(ALLOWED_FILE_MIMES),
+  size: z
+    .number()
+    .int()
+    .positive()
+    .max(FILE_MAX_BYTES, "El archivo supera el máximo de 12MB."),
+});
+
+export type AttachmentInput = z.infer<typeof attachmentSchema>;
+
 export const COMMENT_MAX = 1000;
 export const commentSchema = z.object({
   comentario: z
