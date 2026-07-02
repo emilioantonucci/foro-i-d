@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Sparkles, Paperclip, X, FileText } from "lucide-react";
+import { Sparkles, Paperclip, X, FileText, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
   FILE_MAX_BYTES,
@@ -75,6 +75,7 @@ export default function SourceInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [restricted, setRestricted] = useState(false);
 
   async function handleFileSelected(selected: File) {
     const ext = extFor(selected.name);
@@ -104,6 +105,7 @@ export default function SourceInput({
       if (error) throw new Error("No se pudo subir el archivo. Probá de nuevo.");
 
       onFileChange({ path, name: selected.name, mime, size: selected.size });
+      setRestricted(false);
       toast.success("Archivo subido · ya podés analizarlo con IA");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "No se pudo subir el archivo.");
@@ -130,6 +132,7 @@ export default function SourceInput({
       return;
     }
     setAnalyzing(true);
+    setRestricted(false);
     try {
       const res = await fetch("/api/ai/summary", {
         method: "POST",
@@ -143,6 +146,11 @@ export default function SourceInput({
         }),
       });
       const json = await res.json();
+      if (json?.code === "RESTRICTED") {
+        // Paywall/anti-bot: mostramos el aviso persistente con CTA al adjunto.
+        setRestricted(true);
+        return;
+      }
       if (!res.ok || !json.ok) throw new Error(json.error ?? "No se pudo analizar.");
       const source: SourceKind = file
         ? file.mime === FILE_MIME_PDF
@@ -254,6 +262,45 @@ export default function SourceInput({
             <span style={{ fontSize: "12px", color: "var(--fg-muted)" }}>máx. 12MB</span>
           )}
         </div>
+
+        {restricted && (
+          <div
+            role="alert"
+            style={{
+              marginTop: "10px",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "10px",
+              background: "rgba(230,159,0,0.10)",
+              border: "1px solid rgba(230,159,0,0.40)",
+              borderRadius: "var(--radius-md)",
+              padding: "10px 12px",
+            }}
+          >
+            <Lock size={15} color="#B07D00" aria-hidden="true" style={{ flex: "none", marginTop: "2px" }} />
+            <div style={{ fontSize: "12.5px", color: "var(--fg-primary)", lineHeight: 1.5 }}>
+              <strong>Este sitio restringe el acceso automático</strong> (paywall o bloqueo
+              anti-bot). Descargá el PDF del recurso desde tu navegador y subilo acá para que
+              la IA pueda analizarlo.{" "}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                  color: "#6B9000",
+                  fontWeight: 700,
+                  fontSize: "12.5px",
+                  textDecoration: "underline",
+                }}
+              >
+                Subir el PDF
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </Field>
   );
