@@ -17,13 +17,33 @@ function block(s: string): string {
   return `[INICIO_DATOS]\n${s}\n[FIN_DATOS]`;
 }
 
-export function summaryPrompt(input: { url?: string; rawText?: string }): string {
+/** De dónde viene el contenido a analizar; ajusta la consigna del prompt.
+ *  Con "pdf"/"youtube" el recurso viaja como part adjunta de la request. */
+export type SummarySource = "web" | "pdf" | "docx" | "youtube";
+
+export function summaryPrompt(input: {
+  url?: string;
+  rawText?: string;
+  source?: SummarySource;
+}): string {
   const cats = CATEGORIAS.map((c) => c.nombre).join(", ");
+  const source = input.source ?? "web";
+  const consigna =
+    source === "pdf"
+      ? "Analizá el documento PDF adjunto para el equipo de I+D."
+      : source === "youtube"
+        ? "Analizá el video de YouTube adjunto para el equipo de I+D."
+        : source === "docx"
+          ? "Analizá el siguiente documento (texto extraído de un Word) para el equipo de I+D."
+          : "Analizá el siguiente recurso para el equipo de I+D.";
+  // Cap más generoso para documentos subidos (contenido curado) que para
+  // texto scrapeado de una web (7000).
+  const rawCap = source === "docx" ? 12000 : 7000;
   return `${ROLE}
 ${GUARD}
-Analizá el siguiente recurso para el equipo de I+D.
-${input.url ? `URL (dato del usuario):\n${block(input.url)}` : ""}
-${input.rawText ? `Contenido / contexto (dato del usuario):\n${block(input.rawText.slice(0, 7000))}` : ""}
+${consigna}
+${input.url && source !== "youtube" ? `URL (dato del usuario):\n${block(input.url)}` : ""}
+${input.rawText ? `Contenido / contexto (dato del usuario):\n${block(input.rawText.slice(0, rawCap))}` : ""}
 
 Devolvé un JSON con esta forma exacta:
 {
@@ -33,7 +53,9 @@ Devolvé un JSON con esta forma exacta:
   "aplicacionIyD": "cómo podría aplicarse en I+D / educación superior (1-2 frases)",
   "riesgos": ["1 a 3 riesgos o limitaciones"],
   "etiquetasSugeridas": ["3 a 6 etiquetas en minúscula, sin el símbolo #"],
-  "categoriaSugerida": "exactamente una de estas: ${cats}"
+  "categoriaSugerida": "exactamente una de estas: ${cats}",
+  "encuestaSugerida": { "pregunta": "una encuesta breve estilo red social sobre el recurso (máx 100 caracteres)", "opciones": ["2 a 4 opciones cortas, máx 40 caracteres cada una"] },
+  "preguntasSugeridas": ["hasta 2 preguntas abiertas que disparen debate en el equipo sobre el recurso"]
 }
 ${JSON_ONLY}`;
 }

@@ -8,6 +8,7 @@ import CommentThread from "@/components/post/CommentThread";
 import GovernanceControls from "@/components/post/GovernanceControls";
 import AiSynthesis from "@/components/post/AiSynthesis";
 import BriefGenerator from "@/components/post/BriefGenerator";
+import FileAttachment from "@/components/publish/FileAttachment";
 import { Semaphore, StatusBadge, CategoryPill, Hashtags } from "@/components/ui/tags";
 import Card from "@/components/ui/Card";
 import Avatar from "@/components/ui/Avatar";
@@ -42,6 +43,15 @@ export default async function PostPage({
 
   const autorNombre = post.autor?.nombre ?? "Colaborador";
   const currentOrden = ESTADOS.find((e) => e.slug === post.estado)?.orden ?? 1;
+
+  // El bucket `recursos` es privado: la descarga usa una signed URL efímera.
+  let fileUrl: string | null = null;
+  if (post.file_path) {
+    const { data: signed } = await supabase.storage
+      .from("recursos")
+      .createSignedUrl(post.file_path, 3600, { download: post.file_name ?? true });
+    fileUrl = signed?.signedUrl ?? null;
+  }
 
   return (
     <div>
@@ -111,6 +121,12 @@ export default async function PostPage({
               >
                 <Link2 size={15} aria-hidden="true" style={{ flex: "none" }} /> {post.url}
               </a>
+            )}
+
+            {fileUrl && post.file_name && (
+              <div>
+                <FileAttachment url={fileUrl} name={post.file_name} size={post.file_size} />
+              </div>
             )}
 
             {post.resumen && (

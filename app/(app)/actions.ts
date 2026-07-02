@@ -5,7 +5,14 @@ import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { geminiModelName } from "@/lib/gemini";
-import { firstError, notifPrefsSchema, datoSchema, commentSchema } from "@/lib/validation";
+import {
+  firstError,
+  notifPrefsSchema,
+  datoSchema,
+  commentSchema,
+  attachmentSchema,
+  type AttachmentInput,
+} from "@/lib/validation";
 import { tipoVotoBySlug } from "@/lib/constants";
 import {
   dispatchNuevaPublicacion,
@@ -24,11 +31,38 @@ export interface CreatePostInput {
   etiquetas?: string[];
   prioridad?: string;
   aplicacion_interna?: string[];
+  /** Adjunto YA subido a Storage por el navegador (solo la referencia). */
+  archivo?: AttachmentInput;
 }
 
 export interface ActionResult {
   ok?: boolean;
   error?: string;
+}
+
+/** Valida la referencia del adjunto y que apunte a la carpeta del caller
+ *  (la RLS del bucket ya lo garantiza en la subida; esto evita persistir
+ *  referencias a objetos ajenos). Devuelve columnas file_* o un error. */
+function attachmentColumns(
+  archivo: AttachmentInput | undefined,
+  userId: string,
+): { cols: Record<string, unknown>; error?: string } {
+  if (!archivo) {
+    return { cols: { file_path: null, file_name: null, file_mime: null, file_size: null } };
+  }
+  const parsed = attachmentSchema.safeParse(archivo);
+  if (!parsed.success) return { cols: {}, error: firstError(parsed.error) };
+  if (!parsed.data.path.startsWith(`${userId}/`)) {
+    return { cols: {}, error: "El archivo adjunto es inválido." };
+  }
+  return {
+    cols: {
+      file_path: parsed.data.path,
+      file_name: parsed.data.name,
+      file_mime: parsed.data.mime,
+      file_size: parsed.data.size,
+    },
+  };
 }
 
 export async function createPostAction(
@@ -42,6 +76,9 @@ export async function createPostAction(
 
   if (!input.titulo?.trim()) return { error: "El título es obligatorio." };
 
+  const adj = attachmentColumns(input.archivo, user.id);
+  if (adj.error) return { error: adj.error };
+
   const { data, error } = await supabase
     .from("posts")
     .insert({
@@ -54,6 +91,7 @@ export async function createPostAction(
       etiquetas: input.etiquetas ?? [],
       prioridad: input.prioridad || "media",
       aplicacion_interna: input.aplicacion_interna ?? [],
+      ...adj.cols,
     })
     .select("id")
     .single();
@@ -231,6 +269,8 @@ export interface CreateDatoInput {
   url?: string;
   descripcion?: string;
   etiquetas?: string[];
+  /** Adjunto YA subido a Storage por el navegador (solo la referencia). */
+  archivo?: AttachmentInput;
 }
 
 export async function createDatoAction(
@@ -250,6 +290,9 @@ export async function createDatoAction(
   });
   if (!parsed.success) return { error: firstError(parsed.error) };
 
+  const adj = attachmentColumns(input.archivo, user.id);
+  if (adj.error) return { error: adj.error };
+
   const { data, error } = await supabase
     .from("datos")
     .insert({
@@ -259,6 +302,7 @@ export async function createDatoAction(
       url: parsed.data.url?.trim() || null,
       descripcion: parsed.data.descripcion?.trim() || null,
       etiquetas: input.etiquetas ?? [],
+      ...adj.cols,
     })
     .select("id")
     .single();

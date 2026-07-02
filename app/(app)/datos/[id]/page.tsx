@@ -7,6 +7,7 @@ import { datoTipoBySlug } from "@/lib/constants";
 import DatoComments from "@/components/datos/DatoComments";
 import DeleteDatoButton from "@/components/datos/DeleteDatoButton";
 import LikeButton from "@/components/datos/LikeButton";
+import FileAttachment from "@/components/publish/FileAttachment";
 import { Hashtags } from "@/components/ui/tags";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
@@ -34,6 +35,15 @@ export default async function DatoPage({
 
   const autorNombre = dato.autor?.nombre ?? "Colaborador";
   const tipo = datoTipoBySlug(dato.tipo);
+
+  // El bucket `recursos` es privado: la descarga usa una signed URL efímera.
+  let fileUrl: string | null = null;
+  if (dato.file_path) {
+    const { data: signed } = await supabase.storage
+      .from("recursos")
+      .createSignedUrl(dato.file_path, 3600, { download: dato.file_name ?? true });
+    fileUrl = signed?.signedUrl ?? null;
+  }
 
   return (
     <div style={{ maxWidth: "820px" }}>
@@ -96,6 +106,12 @@ export default async function DatoPage({
           >
             <Link2 size={15} aria-hidden="true" style={{ flex: "none" }} /> {dato.url}
           </a>
+        )}
+
+        {fileUrl && dato.file_name && (
+          <div>
+            <FileAttachment url={fileUrl} name={dato.file_name} size={dato.file_size} />
+          </div>
         )}
 
         {dato.descripcion && (
