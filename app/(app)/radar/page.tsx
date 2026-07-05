@@ -99,7 +99,7 @@ async function LeaderRail() {
             <span style={{ width: "18px", fontSize: "12px", fontWeight: 700, color: "var(--fg-muted)" }}>
               {i + 1}
             </span>
-            <Avatar name={u.nombre} size={30} title={u.nombre ?? "Colaborador"} />
+            <Avatar name={u.nombre} src={u.avatar_url} size={30} title={u.nombre ?? "Colaborador"} />
             <span style={{ minWidth: 0, flex: 1 }}>
               <span
                 style={{

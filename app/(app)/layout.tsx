@@ -28,7 +28,7 @@ export default async function AppLayout({
   // back to the auth user so the shell still renders.
   const { data: profileRow } = await supabase
     .from("profiles")
-    .select("nombre, email, puntos, last_activity_at, last_penalty_at")
+    .select("nombre, email, avatar_url, puntos, last_activity_at, last_penalty_at")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -64,6 +64,7 @@ export default async function AppLayout({
       user.email ??
       "Colaborador",
     email: profileRow?.email ?? user.email ?? "",
+    avatar_url: profileRow?.avatar_url ?? null,
     puntos,
     rango: rankForPoints(puntos).nombre,
   };

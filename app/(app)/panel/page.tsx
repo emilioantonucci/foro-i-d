@@ -122,7 +122,7 @@ export default async function PanelPage() {
                 <span style={{ width: "18px", fontSize: "12px", fontWeight: 700, color: "var(--fg-muted)" }}>
                   {i + 1}
                 </span>
-                <Avatar name={u.nombre} size={30} title={u.nombre ?? "Colaborador"} />
+                <Avatar name={u.nombre} src={u.avatar_url} size={30} title={u.nombre ?? "Colaborador"} />
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: "block", fontSize: "13.5px", fontWeight: 700, color: "var(--fg-primary)" }}>
                     {u.nombre ?? "Colaborador"}

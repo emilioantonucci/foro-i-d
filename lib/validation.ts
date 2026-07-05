@@ -139,6 +139,26 @@ export const attachmentSchema = z.object({
 
 export type AttachmentInput = z.infer<typeof attachmentSchema>;
 
+// ---- foto de perfil (avatar) — bucket público `avatars`, migration 0016 ----
+export const AVATAR_MAX_BYTES = 5 * 1024 * 1024; // 5MB (sobre el archivo original)
+export const ALLOWED_AVATAR_MIMES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+] as const;
+
+/** Ruta del avatar YA subido a Storage. La server action valida además que la
+ *  carpeta raíz sea el uid del usuario (no basta el schema para eso). */
+export const avatarPathSchema = z
+  .string()
+  .min(1)
+  .max(300)
+  .refine((p) => !p.includes(".."), "Ruta de avatar inválida.")
+  .refine(
+    (p) => /\.(webp|jpe?g|png)$/i.test(p),
+    "Formato de imagen no soportado.",
+  );
+
 // ---- encuestas (polls estilo Instagram) — migration 0013 ------------------
 export const POLL_LIMITS = { pregunta: 120, opcion: 60, maxOpciones: 4 } as const;
 

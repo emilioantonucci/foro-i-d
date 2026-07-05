@@ -141,6 +141,7 @@ export default function NotificationBell({
                 >
                   <Avatar
                     name={n.actor_nombre}
+                    src={n.actor_avatar}
                     size={26}
                     title={n.actor_nombre ?? "Colaborador"}
                   />
