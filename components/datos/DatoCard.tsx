@@ -17,7 +17,7 @@ export default function DatoCard({ dato }: { dato: FeedDato }) {
     <Card as="article" pad="md" hover style={{ marginBottom: "14px" }}>
       {/* header */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-        <Avatar name={autorNombre} size={32} title={autorNombre} />
+        <Avatar name={autorNombre} src={dato.autor?.avatar_url} size={32} title={autorNombre} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg-primary)" }}>
             {autorNombre}

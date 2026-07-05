@@ -5,6 +5,7 @@ import type { FeedPost } from "@/lib/data/posts";
 import { rankProgress } from "@/lib/points";
 import { timeAgo } from "@/lib/ui";
 import Avatar from "@/components/ui/Avatar";
+import AvatarUpload from "@/components/profile/AvatarUpload";
 import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import EmptyState from "@/components/ui/EmptyState";
@@ -25,10 +26,13 @@ export default function ProfileView({
   profile,
   stats,
   posts,
+  editable = false,
 }: {
   profile: FullProfile;
   stats: ProfileStats;
   posts: FeedPost[];
+  /** Solo en el perfil propio: habilita subir/cambiar la foto. */
+  editable?: boolean;
 }) {
   const nombre = profile.nombre ?? "Colaborador";
   const prog = rankProgress(profile.puntos);
@@ -41,7 +45,11 @@ export default function ProfileView({
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {/* header */}
       <Card pad="lg" style={{ display: "flex", gap: "20px", alignItems: "flex-start", flexWrap: "wrap" }}>
-        <Avatar name={nombre} size={76} title={nombre} />
+        {editable ? (
+          <AvatarUpload name={nombre} currentUrl={profile.avatar_url} size={76} />
+        ) : (
+          <Avatar name={nombre} src={profile.avatar_url} size={76} title={nombre} />
+        )}
         <div style={{ flex: 1, minWidth: "220px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
             <h1 style={{ fontFamily: "var(--font-secondary)", fontSize: "22px", margin: 0, color: "var(--fg-primary)" }}>

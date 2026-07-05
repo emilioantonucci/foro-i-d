@@ -21,6 +21,7 @@ export interface TraccionRow {
 export interface TopRow {
   id: string;
   nombre: string | null;
+  avatar_url: string | null;
   puntos: number;
   rango: string;
 }

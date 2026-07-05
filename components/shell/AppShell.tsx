@@ -4,6 +4,7 @@ export interface ShellProfile {
   id: string;
   nombre: string;
   email: string;
+  avatar_url: string | null;
   puntos: number;
   rango: string;
 }

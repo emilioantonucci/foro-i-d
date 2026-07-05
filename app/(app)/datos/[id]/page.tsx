@@ -70,7 +70,7 @@ export default async function DatoPage({
 
       <Card as="article" pad="lg" style={{ marginTop: "14px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "11px", marginBottom: "16px" }}>
-          <Avatar name={autorNombre} size={38} title={autorNombre} />
+          <Avatar name={autorNombre} src={dato.autor?.avatar_url} size={38} title={autorNombre} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--fg-primary)" }}>
               {autorNombre}

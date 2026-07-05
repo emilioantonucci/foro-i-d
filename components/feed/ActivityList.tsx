@@ -7,6 +7,7 @@ import Avatar from "@/components/ui/Avatar";
 export interface ActivityItem {
   id: string;
   nombre: string | null;
+  avatar: string | null;
   texto: string;
   href: string;
   when: string;
@@ -27,7 +28,7 @@ export default function ActivityList({ items }: { items: ActivityItem[] }) {
           href={it.href}
           style={{ display: "flex", alignItems: "flex-start", gap: "10px", padding: "7px 0" }}
         >
-          <Avatar name={it.nombre} size={26} title={it.nombre ?? "Colaborador"} />
+          <Avatar name={it.nombre} src={it.avatar} size={26} title={it.nombre ?? "Colaborador"} />
           <span style={{ minWidth: 0, flex: 1 }}>
             <span
               style={{

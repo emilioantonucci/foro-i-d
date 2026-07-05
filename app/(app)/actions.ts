@@ -11,6 +11,7 @@ import {
   datoSchema,
   commentSchema,
   attachmentSchema,
+  avatarPathSchema,
   pollSchema,
   preguntasSchema,
   type AttachmentInput,
@@ -303,6 +304,77 @@ export async function updateProfileAction(input: {
 
   revalidatePath("/perfil");
   revalidatePath("/ranking");
+  return { ok: true };
+}
+
+const AVATARS_BUCKET = "avatars";
+
+/** Deriva el path dentro del bucket desde una URL pública de Supabase Storage
+ *  (`…/object/public/avatars/<path>`), para poder borrar el objeto viejo. */
+function avatarPathFromPublicUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const marker = `/${AVATARS_BUCKET}/`;
+  const i = url.indexOf(marker);
+  if (i === -1) return null;
+  const path = url.slice(i + marker.length).split("?")[0];
+  return path || null;
+}
+
+/**
+ * Guarda (o quita) la foto de perfil. El navegador ya subió el recorte al
+ * bucket `avatars` y nos pasa el `path`; acá validamos que sea de la carpeta
+ * del usuario, resolvemos la URL pública y persistimos `avatar_url`. Con
+ * `path === null` se quita la foto (vuelve a las iniciales). Best-effort:
+ * borra el avatar anterior para no dejar huérfanos.
+ */
+export async function updateAvatarAction(input: {
+  path: string | null;
+}): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado." };
+
+  // Avatar anterior (para limpiar el objeto viejo después).
+  const { data: prev } = await supabase
+    .from("profiles")
+    .select("avatar_url")
+    .eq("id", user.id)
+    .maybeSingle();
+  const prevPath = avatarPathFromPublicUrl(prev?.avatar_url);
+
+  let avatarUrl: string | null = null;
+  if (input.path !== null) {
+    const parsed = avatarPathSchema.safeParse(input.path);
+    if (!parsed.success) return { error: firstError(parsed.error) };
+    // La RLS del bucket ya lo exige, pero validamos también acá.
+    if (!parsed.data.startsWith(`${user.id}/`)) {
+      return { error: "Ruta de avatar inválida." };
+    }
+    avatarUrl = supabase.storage.from(AVATARS_BUCKET).getPublicUrl(parsed.data)
+      .data.publicUrl;
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", user.id);
+  if (error) return { error: error.message };
+
+  // Limpieza best-effort del avatar anterior (RLS solo permite borrar lo propio).
+  const newPath = input.path;
+  if (prevPath && prevPath !== newPath) {
+    try {
+      await supabase.storage.from(AVATARS_BUCKET).remove([prevPath]);
+    } catch {
+      /* huérfano aceptable */
+    }
+  }
+
+  revalidatePath("/perfil");
+  revalidatePath("/ranking");
+  revalidatePath("/radar");
   return { ok: true };
 }
 

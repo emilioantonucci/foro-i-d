@@ -105,7 +105,7 @@ export default function DatoComments({
             const nombre = c.autor?.nombre ?? "Colaborador";
             return (
               <div key={c.id} style={{ display: "flex", gap: "11px" }}>
-                <Avatar name={nombre} size={32} title={nombre} />
+                <Avatar name={nombre} src={c.autor?.avatar_url} size={32} title={nombre} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
                     <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--fg-primary)" }}>

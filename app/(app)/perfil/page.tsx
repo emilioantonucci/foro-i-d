@@ -30,7 +30,7 @@ export default async function PerfilPage() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <ProfileView profile={profile} stats={stats} posts={posts} />
+      <ProfileView profile={profile} stats={stats} posts={posts} editable />
       <EditProfile
         nombre={profile.nombre ?? ""}
         bio={profile.bio ?? ""}

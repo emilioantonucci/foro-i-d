@@ -141,7 +141,7 @@ const Sidebar = forwardRef<HTMLElement, SidebarProps>(function Sidebar(
           aria-current={isActive("/perfil") ? "page" : undefined}
           style={{ gap: "10px", padding: "8px" }}
         >
-          <Avatar name={profile.nombre} size={36} />
+          <Avatar name={profile.nombre} src={profile.avatar_url} size={36} />
           <span style={{ minWidth: 0 }}>
             <span
               style={{

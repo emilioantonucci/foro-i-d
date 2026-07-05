@@ -9,6 +9,7 @@ function toItem(e: ActivityEvent): ActivityItem {
   return {
     id: e.id,
     nombre: e.actor_nombre,
+    avatar: e.actor_avatar,
     ...railText(e),
     // computed server-side so the client markup matches the SSR output
     when: timeAgo(e.created_at),

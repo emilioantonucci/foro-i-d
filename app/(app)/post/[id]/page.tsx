@@ -82,7 +82,7 @@ export default async function PostPage({
         <div>
           <Card as="article" pad="lg">
             <div style={{ display: "flex", alignItems: "center", gap: "11px", marginBottom: "16px" }}>
-              <Avatar name={autorNombre} size={38} title={autorNombre} />
+              <Avatar name={autorNombre} src={post.autor?.avatar_url} size={38} title={autorNombre} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--fg-primary)" }}>
                   {autorNombre}

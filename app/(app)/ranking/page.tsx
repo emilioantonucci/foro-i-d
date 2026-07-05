@@ -122,7 +122,7 @@ export default async function RankingPage() {
                         <td style={{ fontWeight: 700, color: "var(--fg-muted)" }}>{i + 1}</td>
                         <td>
                           <Link href={`/perfil/${u.id}`} style={{ display: "flex", alignItems: "center", gap: "9px" }}>
-                            <Avatar name={u.nombre} size={28} title={u.nombre ?? "Colaborador"} />
+                            <Avatar name={u.nombre} src={u.avatar_url} size={28} title={u.nombre ?? "Colaborador"} />
                             <span style={{ fontWeight: 700, color: "var(--fg-primary)" }}>
                               {u.nombre ?? "Colaborador"}
                               {isMe ? " · vos" : ""}
@@ -164,7 +164,7 @@ export default async function RankingPage() {
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       <span style={{ width: "20px", fontWeight: 700, color: "var(--fg-muted)" }}>{i + 1}</span>
-                      <Avatar name={u.nombre} size={34} title={u.nombre ?? "Colaborador"} />
+                      <Avatar name={u.nombre} src={u.avatar_url} size={34} title={u.nombre ?? "Colaborador"} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 700, color: "var(--fg-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {u.nombre ?? "Colaborador"}
